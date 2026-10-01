@@ -2,7 +2,10 @@
   "name": "buddy",
   "version": "0.1.4",
   "description": "A personal assistant for your machine.",
-  "author": "Buddy",
+  "author": "Point & Click Research, LLC",
+  "homepage": "https://thebuddyassistant.com",
+  "repository": "github:Point-Click-Research/buddy",
+  "bugs": "https://github.com/Point-Click-Research/buddy/issues",
   "main": "out/main/index.js",
   "license": "MIT",
   "packageManager": "npm@11.7.0",
@@ -58,17 +61,6 @@
         "NSMicrophoneUsageDescription": "Buddy listens to your voice so it can answer questions about your screen.",
         "NSAppleEventsUsageDescription": "Buddy reads the text you highlight, and the page or document in front of you, so it can answer questions about them."
       }
-    },
-    "win": {
-      "target": [
-        "nsis"
-      ]
-    },
-    "linux": {
-      "target": [
-        "AppImage"
-      ],
-      "category": "Utility"
     }
   },
   "scripts": {
