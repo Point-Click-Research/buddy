@@ -1,0 +1,33 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>Marks — last turn</title>
+    <style>
+      body {
+        margin: 0;
+        padding: 24px;
+        font: 13px/1.5 system-ui, sans-serif;
+        background: #16161a;
+        color: #e8e8ec;
+      }
+      h1 { font-size: 16px; margin: 0 0 4px; }
+      h2 { font-size: 13px; margin: 24px 0 8px; color: #a0a0ab; text-transform: uppercase; letter-spacing: 0.06em; }
+      .empty { color: #77777f; margin-top: 32px; }
+      figure { margin: 0 0 16px; }
+      figcaption { color: #a0a0ab; margin-bottom: 6px; }
+      img { max-width: 100%; border: 1px solid #2c2c33; border-radius: 8px; display: block; }
+      pre { white-space: pre-wrap; background: #1e1e24; border: 1px solid #2c2c33; border-radius: 8px; padding: 12px; }
+      .crops { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
+    </style>
+  </head>
+  <body>
+    <h1>Marks — what the model received last turn</h1>
+    <div id="content"><p class="empty">No turn with marks yet. Hold the talk hotkey and drag to draw one.</p></div>
+    <script type="module" src="./marks-page.ts"></script>
+  </body>
+</html>

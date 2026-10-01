@@ -1,0 +1,220 @@
+@import "tailwindcss";
+@import "./tokens.css";
+
+@theme {
+  --font-sans: -apple-system, system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  --color-ink: var(--ink);
+  --color-ink-hover: var(--ink-hover);
+  --color-on-ink: var(--on-ink);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
+  --color-faint: var(--faint);
+  --color-nav: var(--nav);
+  --color-nav-active: var(--nav-active);
+  --color-line: var(--line);
+  --color-line-soft: var(--line-soft);
+  --color-canvas: var(--canvas);
+  --color-raised: var(--raised);
+  --color-plain-white: var(--plain-white);
+  --color-well: var(--well);
+  --color-wash: var(--wash);
+  --color-secondary: var(--secondary);
+  --color-secondary-hover: var(--secondary-hover);
+  --color-button-secondary: var(--button-secondary);
+  --color-button-secondary-hover: var(--button-secondary-hover);
+  --color-row-hover: var(--row-hover);
+  --color-chip: var(--chip);
+  --color-chip-hover: var(--chip-hover);
+  --color-track: var(--track);
+  --color-knob: var(--knob);
+  --color-focus: var(--focus);
+  --color-danger: var(--danger);
+  --color-ok: var(--ok);
+  --color-success: var(--ok);
+  --color-warn: var(--warn);
+  --color-link: var(--link);
+
+  --radius-xs: 7.6px;
+  --radius-sm: 10px;
+  --radius-base: 12px;
+
+  --shadow-input: var(--elev-input);
+  --shadow-knob: var(--elev-knob);
+  --shadow-card: var(--elev-card);
+  --shadow-button: var(--elev-button);
+  --shadow-button-secondary: var(--elev-button-secondary);
+  --shadow-button-pressed: var(--elev-button-pressed);
+}
+
+@utility app-drag {
+  -webkit-app-region: drag;
+}
+
+@utility app-no-drag {
+  -webkit-app-region: no-drag;
+}
+
+@keyframes disco-spin {
+  to {
+    filter: hue-rotate(360deg);
+  }
+}
+
+.disco-swatch {
+  background: #ff2d78;
+  animation: disco-spin 2.4s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .disco-swatch {
+    animation: none;
+  }
+}
+
+/* Placeholder for a contenteditable field (the composer, a job's
+   instructions). A pseudo-element stays out of the text. */
+.editable-field:empty::before {
+  content: attr(data-placeholder);
+  color: var(--faint);
+  pointer-events: none;
+}
+
+/* Grey linear shimmer for pending rows and status. Size the bone with w/h. */
+@keyframes skeleton-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+
+.skeleton {
+  display: inline-block;
+  border-radius: 4px;
+  background: linear-gradient(
+    90deg,
+    var(--skeleton) 25%,
+    var(--skeleton-shine) 50%,
+    var(--skeleton) 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.6s linear infinite;
+  vertical-align: middle;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .skeleton {
+    animation: none;
+    background: var(--skeleton);
+  }
+}
+
+/* Modal motion (ui/Modal.tsx). The backdrop fades in, blur and all; the
+   dialog rises a few pixels and settles. Leaving is quicker and eased in,
+   played on a copy since callers unmount the modal. Backwards fill: a
+   modal that never animates is simply visible. */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes fade-out {
+  to {
+    opacity: 0;
+  }
+}
+
+@keyframes modal-rise {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+}
+
+@keyframes modal-sink {
+  to {
+    transform: translateY(4px) scale(0.985);
+  }
+}
+
+/* Something that just appeared in place: a status word, a revealed field. */
+.fade-in {
+  animation: fade-in 0.2s ease-out backwards;
+}
+
+.modal-backdrop {
+  animation: fade-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.modal-dialog {
+  animation: modal-rise 0.28s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.modal-leaving {
+  pointer-events: none;
+  animation: fade-out 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+.modal-leaving .modal-dialog {
+  animation: modal-sink 0.16s cubic-bezier(0.4, 0, 1, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .modal-dialog,
+  .modal-leaving .modal-dialog {
+    animation: none;
+  }
+}
+
+@utility slider {
+  appearance: none;
+  height: 4px;
+  border-radius: 999px;
+  background: var(--track);
+  cursor: pointer;
+
+  &::-webkit-slider-thumb {
+    appearance: none;
+    width: 17px;
+    height: 17px;
+    border-radius: 999px;
+    background: var(--knob);
+    border: 0.5px solid var(--line);
+    box-shadow: var(--elev-knob);
+  }
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    overflow: hidden;
+    background: var(--canvas);
+    color: var(--ink);
+    font: 13px/1.45 var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* A window whose BrowserWindow has vibrancy: the canvas goes translucent so
+     the blurred desktop reads through, on the body and every surface that
+     paints the canvas over it. */
+  body.translucent {
+    --canvas: color-mix(in srgb, var(--canvas-solid) 90%, transparent);
+    background: var(--canvas);
+  }
+
+  /* A transparent BrowserWindow holding one floating card: nothing paints
+     behind the card itself. */
+  body.clear {
+    background: transparent;
+  }
+}

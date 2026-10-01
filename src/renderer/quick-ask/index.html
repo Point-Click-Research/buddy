@@ -1,0 +1,45 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <link rel="stylesheet" href="./quick-ask.css" />
+  </head>
+  <body>
+    <!-- The Type to Buddy box: one autofocused line next to the buddy dot.
+         A highlight while it's open sits in the field as a small chip.
+         The footer says how to send; the window height in windows.ts matches it. -->
+    <div id="shell">
+      <div id="row">
+        <div id="chip" hidden>
+          <svg class="chip-icon" viewBox="0 0 16 16" aria-hidden="true">
+            <rect x="1" y="10.2" width="9" height="3" rx="0.8" fill="currentColor" opacity="0.35" />
+            <path
+              d="M8.1 1.7 13.2 6.8 8.4 11.6H3.3V6.5L8.1 1.7z"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.3"
+              stroke-linejoin="round"
+            />
+            <path d="M6.2 3.6 11.3 8.7" fill="none" stroke="currentColor" stroke-width="1.3" />
+          </svg>
+          <span id="chip-label"></span>
+        </div>
+        <input id="field" type="text" placeholder="Type or hold to talk…" spellcheck="true" aria-label="Message to Buddy" />
+      </div>
+      <div id="foot">
+        <span id="hint">⏎ to send · Esc to cancel</span>
+        <button id="send" type="button" aria-label="Send" disabled>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="m5 12 7-7 7 7" />
+            <path d="M12 19V5" />
+          </svg>
+        </button>
+      </div>
+    </div>
+    <script type="module" src="./quick-ask.ts"></script>
+  </body>
+</html>

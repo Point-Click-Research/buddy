@@ -1,0 +1,271 @@
+html,
+body {
+  margin: 0;
+  background: transparent;
+  font: 14px/1.45 -apple-system, system-ui, sans-serif;
+  user-select: none;
+}
+
+.panel {
+  margin: 6px;
+  padding: 16px;
+  border-radius: 14px;
+  background: rgba(24, 22, 38, 0.94);
+  border: 1px solid rgba(124, 108, 255, 0.35);
+  color: #eceafd;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
+header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.state-pill {
+  padding: 3px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 600;
+  background: rgba(124, 108, 255, 0.18);
+  color: #b9afff;
+  border: 1px solid rgba(124, 108, 255, 0.4);
+  text-transform: capitalize;
+}
+
+.state-pill[data-state='listening'] {
+  background: rgba(64, 200, 120, 0.18);
+  color: #7ce0a3;
+  border-color: rgba(64, 200, 120, 0.4);
+}
+
+.state-pill[data-state='error'] {
+  background: rgba(229, 72, 77, 0.18);
+  color: #ff9a9e;
+  border-color: rgba(229, 72, 77, 0.4);
+}
+
+.pills {
+  display: flex;
+  gap: 6px;
+}
+
+.state-pill.always-on {
+  background: rgba(64, 170, 220, 0.18);
+  color: #7ec8ec;
+  border-color: rgba(64, 170, 220, 0.4);
+}
+
+#mic-meter {
+  margin: 10px 0;
+  height: 8px;
+  border-radius: 99px;
+  background: rgba(124, 108, 255, 0.15);
+  overflow: hidden;
+}
+
+#mic-fill {
+  height: 100%;
+  width: 0%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #7c6cff, #7ce0a3);
+  transition: width 60ms linear;
+}
+
+#transcript {
+  font-style: italic;
+}
+
+#transcript-text[contenteditable='true'] {
+  outline: 1px dashed rgba(124, 108, 255, 0.45);
+  border-radius: 4px;
+  padding: 0 2px;
+  user-select: text;
+  cursor: text;
+  font-style: italic;
+}
+
+#response {
+  margin: 10px 0;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(124, 108, 255, 0.1);
+  border: 1px solid rgba(124, 108, 255, 0.25);
+  max-height: 130px;
+  overflow-y: auto;
+  font-size: 13.5px;
+  white-space: pre-wrap;
+}
+
+#error {
+  margin: 8px 0 0;
+  font-size: 13px;
+  color: #ff9a9e;
+}
+
+/* --- Sources --------------------------------------------------------------- */
+
+#sources {
+  margin-top: 10px;
+}
+
+#sources h3 {
+  margin: 0 0 6px;
+  font-size: 13px;
+  color: #b9afff;
+}
+
+#source-list {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  max-height: 96px;
+  overflow-y: auto;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+  padding: 3px 8px 3px 5px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: #d8d4f0;
+  font: 500 12.5px inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.source:hover {
+  background: rgba(124, 108, 255, 0.18);
+  color: #fff;
+}
+
+.source-mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: #fff;
+  font: 700 10px/16px -apple-system, system-ui, sans-serif;
+  text-align: center;
+}
+
+.source-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+.hint {
+  margin: 0 0 8px;
+  color: #b9b5d1;
+}
+
+.hint.dim {
+  color: #7f7a99;
+  font-size: 13px;
+}
+
+#open-settings {
+  padding: 4px 10px;
+  border-radius: 7px;
+  border: 1px solid rgba(124, 108, 255, 0.5);
+  background: rgba(124, 108, 255, 0.18);
+  color: #eceafd;
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+#open-settings:hover {
+  background: rgba(124, 108, 255, 0.3);
+}
+
+footer {
+  margin-top: 14px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* --- Agent action log ------------------------------------------------------ */
+
+#agent-log {
+  margin-top: 10px;
+}
+
+.agent-log-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.agent-log-head h3 {
+  margin: 0;
+  font-size: 13px;
+  color: #b9afff;
+}
+
+.agent-log-head button {
+  padding: 3px 9px;
+  border-radius: 7px;
+  border: 1px solid rgba(124, 108, 255, 0.5);
+  background: rgba(124, 108, 255, 0.18);
+  color: #eceafd;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+#agent-log-list {
+  margin-top: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.log-entry {
+  display: flex;
+  gap: 8px;
+  padding: 5px 0;
+  border-top: 1px solid rgba(124, 108, 255, 0.15);
+  font-size: 12px;
+}
+
+.log-entry img {
+  width: 56px;
+  height: auto;
+  align-self: flex-start;
+  border-radius: 4px;
+  border: 1px solid rgba(124, 108, 255, 0.3);
+}
+
+.log-action {
+  font-weight: 600;
+}
+
+.log-args {
+  color: #8d88a8;
+  word-break: break-all;
+}
+
+.log-reasoning {
+  color: #a5a0bf;
+  font-style: italic;
+}

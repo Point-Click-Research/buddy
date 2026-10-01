@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <title>Boogle</title>
+    <link rel="stylesheet" href="./boogle.css" />
+  </head>
+  <body>
+    <!-- Buddy's browser before it has a page: Buddy, his search engine, and
+         a bar that goes wherever a typed address would. -->
+    <main>
+      <div id="buddy" role="presentation"></div>
+      <h1>Boogle</h1>
+      <form id="search">
+        <input
+          name="q"
+          type="text"
+          aria-label="Search or type a web address"
+          placeholder="Search or type a web address"
+          autocomplete="off"
+          spellcheck="false"
+          autofocus
+        />
+      </form>
+    </main>
+    <script type="module" src="./boogle.ts"></script>
+  </body>
+</html>

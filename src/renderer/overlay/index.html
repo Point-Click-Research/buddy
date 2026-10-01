@@ -1,0 +1,126 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <link rel="stylesheet" href="./overlay.css" />
+  </head>
+  <body>
+    <!-- SVG layer for annotations (circles, arrows, highlights, labels) -->
+    <svg id="annotations">
+      <defs>
+        <marker id="arrowhead" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+          <path d="M0,0 L8,4 L0,8 Z" fill="var(--accent)" />
+        </marker>
+      </defs>
+    </svg>
+    <!-- SVG layer for the draw tool. Shapes are built from validated
+         geometry in the main process; nothing here is model-authored markup. -->
+    <svg id="drawings-layer">
+      <defs>
+        <marker
+          id="draw-arrow"
+          markerWidth="7"
+          markerHeight="7"
+          refX="5.5"
+          refY="3.5"
+          orient="auto-start-reverse"
+        >
+          <path d="M0,0 L7,3.5 L0,7 Z" fill="context-stroke" />
+        </marker>
+      </defs>
+      <g id="drawings"></g>
+    </svg>
+    <!-- The user's own marks, drawn while holding the talk chord. Separate
+         from Buddy's layers so his clears and erases never touch them. -->
+    <svg id="marks-layer"></svg>
+    <!-- The cursor buddy dot; its ring is drawn with ::before -->
+    <div id="buddy" data-state="idle"></div>
+    <!-- Caption bubble: streams Buddy's response next to the dot -->
+    <div id="caption" hidden></div>
+    <!-- Error bubble: what just failed, next to the cursor. Always shown,
+         even with the caption bubble or the dot switched off. -->
+    <div id="error-bubble" hidden></div>
+    <!-- Shimmer pill: what Buddy is doing between speeches -->
+    <div id="activity" hidden><span class="shimmer-text"></span></div>
+    <!-- Sources from a tool result; hover to reach them, click to open -->
+    <button type="button" id="ask-selection" hidden>Ask Buddy</button>
+    <!-- The top-right corner: this answer's sources -->
+    <div id="corner">
+      <div id="sources" hidden>
+        <div class="sources-head">
+          <span>Sources</span>
+          <button type="button" id="sources-dismiss" aria-label="Hide sources">×</button>
+        </div>
+        <div id="source-list"></div>
+      </div>
+    </div>
+    <!-- Live terminal: run_command's output as it streams -->
+    <div id="terminal" class="card" hidden>
+      <div class="card-body">
+        <div class="terminal-head card-title">
+          <span id="terminal-command"></span>
+          <span id="terminal-status"></span>
+        </div>
+        <pre id="terminal-output" class="card-detail"></pre>
+      </div>
+    </div>
+    <!-- Agent HUD: glowing border + pill while Buddy controls this display -->
+    <div id="driving-border" hidden></div>
+    <div id="driving-pill" hidden>Buddy is driving · Esc to stop</div>
+    <!-- Call pill: who Buddy is calling through Bland and how it's going -->
+    <div id="call-pill" data-state="dialing" hidden>
+      <svg viewBox="0 0 24 24" aria-hidden>
+        <path
+          d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"
+        />
+      </svg>
+      <span id="call-who"></span>
+      <span class="call-dot" aria-hidden></span>
+      <span id="call-state"></span>
+    </div>
+    <!-- Confirmation card (tool calls, plan approvals): Enter / "yes" approves, Esc / "no" denies -->
+    <div id="confirm" class="card" hidden>
+      <div class="confirm-body card-body" id="confirm-body" hidden>
+        <p class="card-title" id="confirm-tool" hidden></p>
+        <pre class="card-detail" id="confirm-detail" hidden></pre>
+        <p class="card-note" id="confirm-note" hidden></p>
+      </div>
+      <div id="confirm-plan" class="confirm-plan" hidden>
+        <textarea id="confirm-description" spellcheck="true" aria-label="Task plan"></textarea>
+        <div id="confirm-mode" class="confirm-mode" role="radiogroup" aria-label="Where it runs" hidden>
+          <label>
+            <input type="radio" name="confirm-mode" value="watch" checked />
+            <strong>Watch</strong>
+            <span>Buddy uses the mouse; you watch</span>
+          </label>
+          <label>
+            <input type="radio" name="confirm-mode" value="browser" />
+            <strong>Buddy's browser</strong>
+            <span>Its own window; you keep working</span>
+          </label>
+        </div>
+        <p id="confirm-mode-note" class="plan-note" hidden></p>
+      </div>
+      <footer class="card-foot">
+        <p class="card-hint" id="confirm-hint">⏎ or say “Yes” · Esc to cancel</p>
+        <button type="button" id="confirm-start" hidden>Start</button>
+      </footer>
+    </div>
+    <!-- ask_user question card: click an option, type an answer, or speak -->
+    <div id="ask" class="card" hidden>
+      <div class="card-body">
+        <p class="card-title" id="ask-question"></p>
+        <div id="ask-options"></div>
+      </div>
+      <input id="ask-input" type="text" placeholder="Type an answer…" spellcheck="true" aria-label="Your answer" />
+      <footer class="card-foot">
+        <p class="card-hint">Pick one, type and ⏎, or hold the hotkey and speak</p>
+      </footer>
+    </div>
+    <script type="module" src="./overlay.ts"></script>
+  </body>
+</html>

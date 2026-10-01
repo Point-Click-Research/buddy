@@ -1,0 +1,541 @@
+/* The empty-state title's typing caret. steps(1) blinks it on and off with
+   no fade, like a terminal cursor. */
+@keyframes caret-blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.typing-caret {
+  display: inline-block;
+  width: 0.06em;
+  height: 0.85em;
+  margin-left: 0.08em;
+  vertical-align: -0.05em;
+  background: currentColor;
+  animation: caret-blink 1.1s steps(1) infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .typing-caret {
+    animation: none;
+  }
+}
+
+/* The walk's hotkey step: mechanical keycaps on a switch plate. Each cap is
+   a lit top face over a darker side wall, and drops the wall's height when
+   its key is down (Keycaps.tsx sets data-down). */
+.keyplate {
+  background: var(--wash);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.08),
+    inset 0 0 0 1px var(--line);
+}
+
+.keycap {
+  --travel: 7px;
+  --side: color-mix(in srgb, var(--ink) 16%, var(--raised));
+  --edge: color-mix(in srgb, var(--ink) 14%, transparent);
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  width: 92px;
+  height: 92px;
+  margin-bottom: var(--travel);
+  border-radius: 16px;
+  background: linear-gradient(
+    172deg,
+    color-mix(in srgb, var(--raised) 88%, white),
+    var(--raised) 55%,
+    color-mix(in srgb, var(--raised) 95%, black)
+  );
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.8),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.05),
+    0 0 0 1px var(--edge),
+    0 var(--travel) 0 var(--side),
+    0 var(--travel) 0 1px var(--edge),
+    0 calc(var(--travel) + 10px) 22px -6px rgba(0, 0, 0, 0.28);
+  transition:
+    transform 70ms cubic-bezier(0.2, 0.8, 0.2, 1),
+    box-shadow 70ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+}
+
+.keycap[data-down='true'] {
+  transform: translateY(calc(var(--travel) - 1px));
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.5),
+    inset 0 2px 4px rgba(0, 0, 0, 0.06),
+    0 0 0 1px var(--edge),
+    0 1px 0 var(--side),
+    0 1px 0 1px var(--edge),
+    0 3px 8px -2px rgba(0, 0, 0, 0.18);
+}
+
+@media (prefers-color-scheme: dark) {
+  .keyplate {
+    box-shadow:
+      inset 0 1px 2px rgba(0, 0, 0, 0.5),
+      inset 0 0 0 1px var(--line);
+  }
+
+  .keycap {
+    --side: color-mix(in srgb, black 55%, var(--raised));
+    --edge: rgba(255, 255, 255, 0.1);
+    background: linear-gradient(
+      172deg,
+      color-mix(in srgb, var(--raised) 80%, white),
+      var(--raised) 50%,
+      color-mix(in srgb, var(--raised) 85%, black)
+    );
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .keycap {
+    transition: none;
+  }
+}
+
+/* The "and say" bubble: its tail points up at the keys. */
+.say-bubble {
+  position: relative;
+}
+
+.say-bubble::before {
+  content: '';
+  position: absolute;
+  top: -6px;
+  left: 50%;
+  width: 10px;
+  height: 10px;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  background: var(--raised);
+  transform: translateX(-50%) rotate(45deg);
+}
+
+/* The floating drag card (DragCard.tsx) draws its own shadow: its window is
+   transparent and shadowless, so the card can sit over System Settings. */
+.drag-card {
+  margin: 8px 12px;
+  box-shadow:
+    0 0 0 0.5px rgba(0, 0, 0, 0.1),
+    0 8px 24px -4px rgba(0, 0, 0, 0.3);
+}
+
+/* Suggestion rows settle in one after another (the delay is set per row).
+   Backwards fill: the resting row is fully visible if the animation never
+   runs. */
+@keyframes idea-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
+
+@keyframes idea-in-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.idea-in {
+  animation: idea-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .idea-in {
+    animation: idea-in-fade 0.2s ease backwards;
+  }
+}
+
+/* A run in flight: the heading and the previous rows stay readable, faded,
+   with the same shine as a skeleton, and they don't take clicks. The fade
+   eases both ways, so the new batch reads as arriving rather than blinking. */
+.ideas > * {
+  transition: opacity 0.3s ease-out;
+}
+
+.ideas-pending {
+  position: relative;
+  pointer-events: none;
+}
+
+.ideas-pending > * {
+  opacity: 0.45;
+}
+
+.ideas-pending::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: var(--radius-base);
+  background: linear-gradient(
+    100deg,
+    transparent 28%,
+    color-mix(in srgb, var(--skeleton) 80%, transparent) 50%,
+    transparent 72%
+  );
+  background-size: 200% 100%;
+  animation:
+    fade-in 0.3s ease-out backwards,
+    skeleton-shimmer 1.6s linear infinite;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ideas-pending::after {
+    animation: none;
+    background: transparent;
+  }
+}
+
+/* New Chat composer: a sunrise coming up over the field, a warm wash with
+   rays fanning out of the field's top edge toward the greeting. It breathes,
+   and its two sets of beams drift past each other, each slowly changing hue,
+   so the colour is always moving. */
+@property --ray-turn {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@property --breath {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+.composer-glow {
+  position: relative;
+  isolation: isolate;
+  overflow: visible;
+  animation: fade-in 0.8s ease-out backwards;
+}
+
+/* Anchored to the field, so a bar under the field can come and go without
+   leaving the light behind. Its own wash fades out inside the box, and the
+   blur is on this layer, over the beams' mask: a mask on the blurred layer
+   itself would cut the spill off hard. */
+.sunrise {
+  --strength: 0.46;
+  position: absolute;
+  z-index: -1;
+  right: 4%;
+  bottom: calc(100% - 28px);
+  left: 4%;
+  height: 240px;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse 50% 70% at 50% 100%,
+    rgb(255 176 92 / 0.9) 0%,
+    rgb(240 101 149 / 0.45) 45%,
+    transparent 100%
+  );
+  filter: blur(34px);
+  opacity: calc(var(--strength) * var(--breath));
+  transform-origin: 50% 100%;
+  animation: sunrise-breathe 7s ease-in-out infinite alternate;
+}
+
+@media (prefers-color-scheme: dark) {
+  .sunrise {
+    --strength: 0.38;
+  }
+}
+
+/* The beams: a few wide, uneven shafts, masked from one light that fades
+   out toward the edges. */
+.sunrise span {
+  position: absolute;
+  inset: 0;
+  mix-blend-mode: screen;
+  mask-composite: intersect;
+}
+
+/* Warm beams: gold at the horizon into coral and rose. */
+.sunrise span:first-child {
+  background: radial-gradient(
+    ellipse 55% 100% at 50% 100%,
+    #ffc46b 0%,
+    #ff8a65 30%,
+    #f06595 62%,
+    transparent 100%
+  );
+  mask-image:
+    conic-gradient(
+      from calc(-90deg + var(--ray-turn)) at 50% 100%,
+      transparent 0deg 18deg,
+      rgb(0 0 0 / 0.7) 32deg,
+      transparent 46deg 58deg,
+      black 74deg,
+      rgb(0 0 0 / 0.35) 86deg,
+      black 100deg,
+      transparent 118deg 128deg,
+      rgb(0 0 0 / 0.75) 144deg,
+      transparent 162deg 180deg
+    ),
+    radial-gradient(ellipse 50% 100% at 50% 100%, black 20%, transparent 100%);
+  animation:
+    sunrise-sway 19s ease-in-out infinite alternate,
+    sunrise-hue 13s ease-in-out infinite alternate;
+}
+
+/* Dawn-sky beams: rose into violet and a little blue, drifting the other way. */
+.sunrise span:last-child {
+  background: radial-gradient(
+    ellipse 60% 100% at 50% 100%,
+    #ff7eb3 0%,
+    #c77dff 45%,
+    #7aa2ff 75%,
+    transparent 100%
+  );
+  mask-image:
+    conic-gradient(
+      from calc(-90deg + var(--ray-turn)) at 50% 100%,
+      transparent 0deg 34deg,
+      rgb(0 0 0 / 0.8) 50deg,
+      transparent 66deg 94deg,
+      rgb(0 0 0 / 0.6) 108deg,
+      transparent 122deg 136deg,
+      black 150deg,
+      transparent 166deg 180deg
+    ),
+    radial-gradient(ellipse 50% 100% at 50% 100%, black 10%, transparent 100%);
+  animation:
+    sunrise-sway 27s ease-in-out infinite alternate-reverse,
+    sunrise-hue 17s ease-in-out -6s infinite alternate-reverse;
+}
+
+@keyframes sunrise-sway {
+  from {
+    --ray-turn: -14deg;
+  }
+  to {
+    --ray-turn: 14deg;
+  }
+}
+
+@keyframes sunrise-hue {
+  from {
+    filter: hue-rotate(-28deg) saturate(1.1);
+  }
+  to {
+    filter: hue-rotate(32deg) saturate(1.3);
+  }
+}
+
+/* In and out: the light swells and brightens, then settles. */
+@keyframes sunrise-breathe {
+  from {
+    --breath: 0.6;
+    transform: scale(0.94, 0.9);
+  }
+  to {
+    --breath: 1;
+    transform: scale(1.04, 1.08);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sunrise,
+  .sunrise span {
+    animation: none;
+  }
+}
+
+/* The setup lip under the New Chat composer. The last suggestion drifts up
+   and softens away while the next one rises into place a beat behind it,
+   so the swap reads as one motion; its logos settle in one after another.
+   Closing folds the lip shut rather than cutting it. */
+.tray-lip {
+  display: grid;
+  grid-template-rows: 1fr;
+  transition:
+    grid-template-rows 0.45s cubic-bezier(0.32, 0.72, 0, 1),
+    opacity 0.3s ease;
+}
+
+.tray-lip > * {
+  min-height: 0;
+}
+
+.tray-lip-closed {
+  grid-template-rows: 0fr;
+  opacity: 0;
+}
+
+.tray-slide-in {
+  animation: tray-in 0.8s cubic-bezier(0.22, 1, 0.36, 1) 0.14s backwards;
+}
+
+.tray-slide-in .tray-art > * {
+  animation: tray-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) backwards;
+  animation-delay: calc(0.24s + (sibling-index() - 1) * 0.055s);
+}
+
+.tray-slide-out {
+  pointer-events: none;
+  animation: tray-out 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes tray-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+    filter: blur(4px);
+  }
+}
+
+@keyframes tray-out {
+  to {
+    opacity: 0;
+    transform: translateY(-8px);
+    filter: blur(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tray-slide-in,
+  .tray-slide-in .tray-art > * {
+    animation: fade-in 0.3s ease-out backwards;
+  }
+  .tray-slide-out {
+    animation: fade-out 0.3s ease-out forwards;
+  }
+}
+
+/* The walk turns a page: the step that's leaving slips out the way you're
+   going, and the next one arrives from the other side. The mark and the bar
+   stay. Backwards fill so a step that never animates is simply there. */
+@keyframes step-enter-next {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+}
+
+@keyframes step-enter-back {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+}
+
+@keyframes step-leave-next {
+  to {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+}
+
+@keyframes step-leave-back {
+  to {
+    opacity: 0;
+    transform: translateX(16px);
+  }
+}
+
+.step-pane[data-motion='enter'][data-dir='1'] {
+  animation: step-enter-next 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.step-pane[data-motion='enter'][data-dir='-1'] {
+  animation: step-enter-back 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.step-pane[data-motion='leave'] {
+  pointer-events: none;
+  animation-duration: 0.15s;
+  animation-timing-function: cubic-bezier(0.4, 0, 1, 1);
+  animation-fill-mode: forwards;
+}
+
+.step-pane[data-motion='leave'][data-dir='1'] {
+  animation-name: step-leave-next;
+}
+
+.step-pane[data-motion='leave'][data-dir='-1'] {
+  animation-name: step-leave-back;
+}
+
+.step-dot {
+  background: var(--line);
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 0.28s ease;
+}
+
+.step-dot[data-on='true'] {
+  background: var(--ink);
+  transform: scale(1.4);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .step-pane {
+    animation: none;
+  }
+
+  .step-dot {
+    transition: none;
+  }
+}
+
+/* Home-only styling for the shared source chips (built by
+   renderer/shared/source-chip.ts). Each surface styles the same class names
+   to fit its own background; these use the ui tokens so dark mode follows. */
+
+.chat-sources {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 100%;
+  padding: 3px 8px 3px 5px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--wash);
+  color: var(--muted);
+  font: 500 12px -apple-system, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.source:hover {
+  background: var(--secondary);
+  color: var(--ink);
+}
+
+.source-mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: #fff;
+  font: 700 10px/16px -apple-system, system-ui, sans-serif;
+  text-align: center;
+}
+
+.source-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}

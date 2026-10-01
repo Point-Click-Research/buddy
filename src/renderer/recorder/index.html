@@ -1,0 +1,17 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <!-- media-src blob: TTS clips play from Blob URLs.
+         wasm-unsafe-eval + worker-src blob: the VAD model runs on
+         onnxruntime's wasm inside a worklet/worker. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'wasm-unsafe-eval' blob:; worker-src 'self' blob:; media-src 'self' blob:"
+    />
+  </head>
+  <body>
+    <!-- Invisible window: owns the microphone and (later) plays TTS audio. -->
+    <script type="module" src="./recorder.ts"></script>
+  </body>
+</html>

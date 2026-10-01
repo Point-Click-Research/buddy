@@ -1,0 +1,161 @@
+/* Shared Buddy chrome tokens. Settings and overlay both import this so
+   light/dark stay in lockstep. Keep --canvas in sync with SETTINGS_CANVAS_*
+   in src/main/windows.ts. */
+:root {
+  color-scheme: light dark;
+
+  --ink: #000000;
+  --ink-hover: #222222;
+  --on-ink: #fcfcfc;
+  --muted: #5c5c5c;
+  --subtle: #626262;
+  --faint: #8b8b8b;
+  --nav: #737373;
+  --nav-active: #000000;
+  --line: #e8e8e8;
+  --line-soft: #ebebeb;
+  --canvas-solid: #fcfcfc;
+  --canvas: var(--canvas-solid);
+  --raised: #fcfcfc;
+  --plain-white: #ffffff;
+  --well: #fcfcfc;
+  --wash: #efefef;
+  --secondary: #e6e6e6;
+  --secondary-hover: #dcdcdc;
+  --track: #d6d6d6;
+  --knob: #fcfcfc;
+  --focus: #c7c7c7;
+  --link: #3b84f7;
+  --danger: #d0453c;
+  --ok: #1f9d55;
+  --warn: #b45309;
+  --elev-input: 0 3px 6px rgba(0, 0, 0, 0.02), 0 1px 1px rgba(0, 0, 0, 0.03);
+  --elev-knob:
+    0 1.6px 3.2px rgba(0, 0, 0, 0.02), 0 0.5px 0.5px rgba(0, 0, 0, 0.03);
+  --elev-card: 0 1px 0.5px rgba(0, 0, 0, 0.03), 0 3px 3px rgba(0, 0, 0, 0.02);
+  /* Plastic button depth: a lit top edge, a shaded bottom edge, a soft drop.
+     Pressed swaps it for a single inner shade so the button reads as sunk. */
+  --elev-button:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    inset 0 -1.5px 0 rgba(0, 0, 0, 0.35), 0 1px 2px rgba(0, 0, 0, 0.18);
+  /* Secondary is flat: a hairline ring and a soft drop give it an edge and
+     a lift, with a faint shade along the bottom and no sheen. */
+  --elev-button-secondary:
+    0 0 0 1px rgba(0, 0, 0, 0.09), inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+    0 1px 2px rgba(0, 0, 0, 0.06);
+  --button-secondary: #ffffff;
+  --button-secondary-hover: #f5f5f5;
+  /* A row's hover and a mark laid on top of it. Each is its own step, and
+     neither is the frame's wash, so a hovered row never blends into its container. */
+  --row-hover: color-mix(in srgb, var(--ink) 12%, var(--raised));
+  --chip: var(--button-secondary);
+  --chip-hover: color-mix(in srgb, var(--ink) 8%, var(--chip));
+  --elev-button-pressed: inset 0 1.5px 2px rgba(0, 0, 0, 0.3);
+  --radius-xs: 7.6px;
+  --radius-sm: 10px;
+  --radius-base: 12px;
+  --skeleton: #ebebeb;
+  --skeleton-shine: #f6f6f6;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ink: #f5f5f5;
+    --ink-hover: #e4e4e4;
+    --on-ink: #111111;
+    --muted: #a8a8a8;
+    --subtle: #9c9c9c;
+    --faint: #8a8a8a;
+    --nav: #b3b3b3;
+    --nav-active: #ffffff;
+    --line: #2a2a2a;
+    --line-soft: #2c2c2c;
+    --canvas-solid: #1c1c1c;
+    --raised: #1b1b1b;
+    --well: #222222;
+    --wash: #272727;
+    --plain-white: #111111;
+    --secondary: #3f3f3f;
+    --secondary-hover: #4a4a4a;
+    --track: #4a4a4a;
+    --knob: #f5f5f5;
+    --focus: #484848;
+    --link: #7eb0ff;
+    --danger: #e85d55;
+    --ok: #3dba6e;
+    --warn: #e0a04a;
+    --elev-input: 0 3px 6px rgba(0, 0, 0, 0.22), 0 1px 1px rgba(0, 0, 0, 0.18);
+    --elev-knob:
+      0 1.6px 3.2px rgba(0, 0, 0, 0.22), 0 0.5px 0.5px rgba(0, 0, 0, 0.18);
+    --elev-card: 0 1px 0.5px rgba(0, 0, 0, 0.2), 0 3px 3px rgba(0, 0, 0, 0.18);
+    /* Primary flips to a light button in dark mode, so its depth comes from
+       the shaded bottom edge and a stronger drop instead of the top sheen. */
+    --elev-button:
+      inset 0 1px 0 rgba(255, 255, 255, 0.9),
+      inset 0 -1.5px 0 rgba(0, 0, 0, 0.18), 0 1px 2px rgba(0, 0, 0, 0.4);
+    --elev-button-secondary:
+      0 0 0 1px rgba(255, 255, 255, 0.07), inset 0 -1px 0 rgba(0, 0, 0, 0.25),
+      0 1px 2px rgba(0, 0, 0, 0.35);
+    --button-secondary: #2f2f2f;
+    --button-secondary-hover: #383838;
+    /* Lighter than the frame, and the chip lighter again, so both come forward. */
+    --row-hover: color-mix(in srgb, #000000 10%, var(--raised));
+    --chip: color-mix(in srgb, var(--ink) 10%, var(--raised));
+    --elev-button-pressed: inset 0 1.5px 2px rgba(0, 0, 0, 0.5);
+    --skeleton: #2e2e2e;
+    --skeleton-shine: #3a3a3a;
+  }
+}
+
+/* Work in progress: a band of full strength sweeping across dimmed text. */
+.shimmer-text {
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    rgb(0 0 0 / 0.5) 30%,
+    #000 50%,
+    rgb(0 0 0 / 0.5) 70%
+  );
+  -webkit-mask-size: 200% 100%;
+  animation: shimmer-text 1.8s linear infinite;
+}
+
+@keyframes shimmer-text {
+  from {
+    -webkit-mask-position: 200% 0;
+  }
+  to {
+    -webkit-mask-position: -200% 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-text {
+    animation: none;
+    -webkit-mask-image: none;
+  }
+}
+
+/* A word arriving in a caption or a streaming reply: soft, then sharp.
+   The resting state stays fully readable if the animation never runs. */
+@keyframes word-in {
+  from {
+    opacity: 0;
+    filter: blur(4px);
+  }
+}
+
+@keyframes word-in-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+.word-in {
+  animation: word-in 0.22s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .word-in {
+    animation: word-in-fade 0.18s ease backwards;
+  }
+}

@@ -1,0 +1,56 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <link rel="stylesheet" href="./panel.css" />
+  </head>
+  <body>
+    <div class="panel">
+      <header>
+        <span class="title" id="title">Buddy</span>
+        <span class="pills">
+          <span class="state-pill always-on" id="always-on" hidden>always-on</span>
+          <span class="state-pill" id="state">idle</span>
+        </span>
+      </header>
+      <p class="hint">Hold <strong>Control + Option</strong> and speak, then release.</p>
+      <p class="hint dim">
+        Press the always-on hotkey (Settings → Controls) and Buddy listens
+        continuously, answering whenever you finish speaking.
+      </p>
+
+      <div id="mic-meter" hidden><div id="mic-fill"></div></div>
+
+      <p class="hint dim" id="transcript" hidden>
+        You: “<span id="transcript-text"></span>”
+      </p>
+      <div id="response" hidden></div>
+      <p id="error" hidden></p>
+
+      <!-- Links from tool results (e.g. web search), opened in the browser. -->
+      <div id="sources" hidden>
+        <h3>Sources</h3>
+        <div id="source-list"></div>
+      </div>
+
+      <!-- Live agent action log, shown while/after an agent task runs. -->
+      <div id="agent-log" hidden>
+        <div class="agent-log-head">
+          <h3>Agent actions</h3>
+          <button id="save-log">Save log</button>
+        </div>
+        <div id="agent-log-list"></div>
+        <p class="hint dim" id="save-log-result" hidden></p>
+      </div>
+
+      <footer>
+        <button id="open-settings">Settings…</button>
+      </footer>
+    </div>
+    <script type="module" src="./panel.ts"></script>
+  </body>
+</html>

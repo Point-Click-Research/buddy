@@ -1,0 +1,130 @@
+{
+  "name": "buddy",
+  "version": "0.1.4",
+  "description": "A personal assistant for your machine.",
+  "author": "Buddy",
+  "main": "out/main/index.js",
+  "license": "MIT",
+  "packageManager": "npm@11.7.0",
+  "build": {
+    "appId": "com.buddy.app",
+    "productName": "Buddy",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "out/**/*"
+    ],
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "Point-Click-Technologies",
+        "repo": "buddy-releases"
+      }
+    ],
+    "asarUnpack": [
+      "**/node_modules/uiohook-napi/**",
+      "**/node_modules/@nut-tree-fork/**",
+      "**/node_modules/get-windows/**",
+      "**/node_modules/@trycua/**",
+      "**/node_modules/onnxruntime-node/**",
+      "**/node_modules/sharp/**",
+      "**/node_modules/@img/**"
+    ],
+    "mac": {
+      "category": "public.app-category.productivity",
+      "artifactName": "${productName}.${ext}",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "arm64"
+          ]
+        }
+      ],
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": true,
+      "extendInfo": {
+        "NSMicrophoneUsageDescription": "Buddy listens to your voice so it can answer questions about your screen.",
+        "NSAppleEventsUsageDescription": "Buddy reads the text you highlight, and the page or document in front of you, so it can answer questions about them."
+      }
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Utility"
+    }
+  },
+  "scripts": {
+    "postinstall": "node scripts/copy-vad-assets.mjs",
+    "dev": "electron-vite dev --watch",
+    "build": "electron-vite build",
+    "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
+    "test": "vitest run",
+    "dist": "electron-vite build && electron-builder",
+    "release": "electron-vite build && (gh release create v$npm_package_version --repo Point-Click-Technologies/buddy-releases --draft --title $npm_package_version --notes '' || true) && electron-builder --publish always"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "^4.3.3",
+    "@types/node": "^25.3.1",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@vitejs/plugin-react": "^5.1.4",
+    "electron": "44.4.5",
+    "electron-builder": "^26.15.3",
+    "electron-vite": "^5.0.0",
+    "tailwindcss": "^4.3.3",
+    "typescript": "^7.0.2",
+    "vite": "^7.3.6",
+    "vitest": "^5.0.1"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.126.0",
+    "@composio/core": "^0.19.0",
+    "@huggingface/transformers": "^4.3.0",
+    "@modelcontextprotocol/sdk": "^1.30.0",
+    "@nut-tree-fork/nut-js": "^4.2.6",
+    "@react-three/drei": "^10.7.9",
+    "@react-three/fiber": "^9.8.1",
+    "@react-three/rapier": "^2.2.0",
+    "@ricky0123/vad-web": "^0.0.31",
+    "@supabase/supabase-js": "^2.117.2",
+    "@trycua/cua-driver": "0.28.2",
+    "@typesafe-ai/sdk": "^0.6.0",
+    "electron-store": "^11.0.2",
+    "electron-updater": "^6.8.9",
+    "get-windows": "^9.3.0",
+    "lucide-react": "^1.47.0",
+    "mathjs": "^15.2.0",
+    "motion": "^13.4.4",
+    "openai": "^7.16.0",
+    "perfect-freehand": "^1.2.3",
+    "points-on-path": "^0.2.1",
+    "react": "^19.3.0",
+    "react-dom": "^19.3.0",
+    "sharp": "^0.35.4",
+    "three": "^0.186.1",
+    "uiohook-napi": "^1.5.5",
+    "unpdf": "^1.8.1",
+    "zod": "^4.6.5"
+  },
+  "overrides": {
+    "sharp": "^0.35.4"
+  }
+}

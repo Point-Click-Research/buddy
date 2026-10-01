@@ -1,0 +1,273 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <title>Harbor Conference — Guest registration</title>
+    <style>
+      :root {
+        --ink: #1c2430;
+        --muted: #5c6b7a;
+        --line: #d5dde6;
+        --paper: #ffffff;
+        --page: #eef2f6;
+        --accent: #0f6e8c;
+        --accent-dark: #0b556c;
+        --ok: #0f7a4a;
+      }
+      * { box-sizing: border-box; }
+      html, body {
+        margin: 0;
+        min-height: 100%;
+        background: var(--page);
+        color: var(--ink);
+        font: 15px/1.5 -apple-system, system-ui, sans-serif;
+      }
+      body { padding: 28px 24px 40px; }
+      header {
+        max-width: 560px;
+        margin: 0 auto 20px;
+      }
+      .kicker {
+        margin: 0 0 4px;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--accent);
+      }
+      h1 {
+        margin: 0 0 6px;
+        font-size: 22px;
+        letter-spacing: -0.02em;
+      }
+      header p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 14px;
+      }
+      .steps {
+        display: flex;
+        gap: 8px;
+        max-width: 560px;
+        margin: 0 auto 16px;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--muted);
+      }
+      .steps span {
+        flex: 1;
+        padding: 8px 10px;
+        border-radius: 8px;
+        background: #e4e9ef;
+        text-align: center;
+      }
+      .steps span.on {
+        background: #d3eaf1;
+        color: var(--accent-dark);
+      }
+      .steps span.done { color: var(--ok); }
+      main {
+        max-width: 560px;
+        margin: 0 auto;
+        padding: 22px 24px 20px;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: var(--paper);
+      }
+      fieldset {
+        margin: 0;
+        padding: 0;
+        border: 0;
+      }
+      legend {
+        margin: 0 0 14px;
+        font-size: 16px;
+        font-weight: 700;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      label.field {
+        display: block;
+        margin-bottom: 12px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      label.field span.req { color: #b42318; }
+      input[type='text'],
+      input[type='email'],
+      input[type='tel'],
+      input[type='date'],
+      select,
+      textarea {
+        display: block;
+        width: 100%;
+        margin-top: 5px;
+        padding: 8px 10px;
+        border: 1px solid #c5ced8;
+        border-radius: 8px;
+        background: #fff;
+        color: var(--ink);
+        font: inherit;
+      }
+      textarea { min-height: 72px; resize: vertical; }
+      .group {
+        margin: 4px 0 14px;
+        padding: 10px 12px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+      }
+      .group-title {
+        margin: 0 0 8px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+      .choice {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin: 6px 0;
+        font-weight: 500;
+      }
+      .choice input { margin: 0; }
+      .nav {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+        margin-top: 8px;
+        padding-top: 14px;
+        border-top: 1px solid var(--line);
+      }
+      button {
+        padding: 9px 16px;
+        border-radius: 8px;
+        border: 1px solid var(--line);
+        background: #f4f7fa;
+        color: var(--ink);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      button.primary {
+        border-color: var(--accent);
+        background: var(--accent);
+        color: #fff;
+      }
+      button.primary:hover { background: var(--accent-dark); }
+      button:disabled { opacity: 0.4; cursor: default; }
+      #done {
+        text-align: center;
+        padding: 36px 12px;
+      }
+      #done h2 {
+        margin: 0 0 8px;
+        font-size: 26px;
+        color: var(--ok);
+      }
+      #done p { margin: 0; color: var(--muted); }
+      .summary {
+        margin: 0 0 14px;
+        padding: 0;
+        list-style: none;
+        font-size: 14px;
+      }
+      .summary li { margin: 6px 0; }
+      .summary strong { display: inline-block; min-width: 108px; color: var(--muted); font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <header>
+      <p class="kicker">Harbor Conference 2026</p>
+      <h1>Guest registration</h1>
+      <p>Local test form — nothing is sent anywhere. Fill it with your About me facts.</p>
+    </header>
+
+    <div class="steps" id="step-pills">
+      <span class="on">1. Contact</span>
+      <span>2. Preferences</span>
+      <span>3. Review</span>
+    </div>
+
+    <main>
+      <form id="reg-form" novalidate>
+        <fieldset data-step="0">
+          <legend>Contact details</legend>
+          <div class="row">
+            <label class="field">Full name <span class="req">*</span>
+              <input name="fullName" type="text" autocomplete="name" required />
+            </label>
+            <label class="field">Email <span class="req">*</span>
+              <input name="email" type="email" autocomplete="email" required />
+            </label>
+          </div>
+          <div class="row">
+            <label class="field">Phone
+              <input name="phone" type="tel" autocomplete="tel" />
+            </label>
+            <label class="field">Company
+              <input name="company" type="text" autocomplete="organization" />
+            </label>
+          </div>
+          <label class="field">Address
+            <input name="address" type="text" autocomplete="street-address" />
+          </label>
+          <label class="field">Role
+            <select name="role">
+              <option value="">Select a role</option>
+              <option value="engineer">Engineer</option>
+              <option value="designer">Designer</option>
+              <option value="product">Product</option>
+              <option value="founder">Founder</option>
+              <option value="other">Other</option>
+            </select>
+          </label>
+        </fieldset>
+
+        <fieldset data-step="1" hidden>
+          <legend>Preferences</legend>
+          <div class="group">
+            <p class="group-title">Attendance <span class="req">*</span></p>
+            <label class="choice"><input type="radio" name="attendance" value="in-person" required /> In person</label>
+            <label class="choice"><input type="radio" name="attendance" value="virtual" /> Virtual</label>
+          </div>
+          <div class="group">
+            <p class="group-title">Sessions of interest</p>
+            <label class="choice"><input type="checkbox" name="tracks" value="keynote" /> Opening keynote</label>
+            <label class="choice"><input type="checkbox" name="tracks" value="workshops" /> Workshops</label>
+            <label class="choice"><input type="checkbox" name="tracks" value="lightning" /> Lightning talks</label>
+          </div>
+          <label class="field">Arrival date
+            <input name="arrival" type="date" />
+          </label>
+          <label class="field">Anything we should know?
+            <textarea name="notes" placeholder="Dietary needs, accessibility, …"></textarea>
+          </label>
+        </fieldset>
+
+        <fieldset data-step="2" hidden>
+          <legend>Review and submit</legend>
+          <ul class="summary" id="review"></ul>
+          <p class="group-title">Submitting only shows “Submitted” on this page. Nothing is sent.</p>
+        </fieldset>
+
+        <div class="nav">
+          <button type="button" id="back" disabled>Back</button>
+          <button type="button" id="next" class="primary">Next</button>
+          <button type="submit" id="submit" class="primary" hidden>Submit</button>
+        </div>
+      </form>
+
+      <div id="done" hidden>
+        <h2>Submitted</h2>
+        <p>This was a local test. You can close this window.</p>
+      </div>
+    </main>
+    <script type="module" src="./test-form.ts"></script>
+  </body>
+</html>

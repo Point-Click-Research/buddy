@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; img-src 'self' data:"
+    />
+    <link rel="stylesheet" href="./browser.css" />
+  </head>
+  <body data-state="hidden">
+    <!-- Buddy's chrome around the page: who is driving and what they are
+         doing, where the page is, and the way to stop or look closer. The
+         page itself is a view main lays inside the frame. -->
+    <header id="bar">
+      <button type="button" id="stop" class="round" aria-label="Stop" title="Stop (⌃⌥Esc)">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><rect x="4.5" y="4.5" width="7" height="7" rx="1.5" /></svg>
+      </button>
+      <button type="button" id="hide" class="round quiet" aria-label="Close" title="Close">
+        <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M5 5l6 6M11 5l-6 6" /></svg>
+      </button>
+      <div id="who">
+        <span id="name">Buddy's Browser</span>
+        <span id="status"></span>
+      </div>
+      <div id="address" hidden>
+        <input id="host" type="text" aria-label="Address" placeholder="Search or type a web address" spellcheck="false" autocomplete="off" />
+      </div>
+      <button type="button" id="toggle" class="icon" aria-label="Expand" title="Expand">
+        <svg class="grow" viewBox="0 0 16 16" aria-hidden="true"><path d="M9.5 2.5h4v4M13.5 2.5 9 7M6.5 13.5h-4v-4M2.5 13.5 7 9" /></svg>
+        <svg class="shrink" viewBox="0 0 16 16" aria-hidden="true"><path d="M13.5 6.5h-4v-4M9.5 6.5 14 2M2.5 9.5h4v4M6.5 9.5 2 14" /></svg>
+      </button>
+    </header>
+    <!-- Peek: browser.ts adds the latest page capture here when one arrives. -->
+    <div id="peek"></div>
+    <script type="module" src="./browser.ts"></script>
+  </body>
+</html>

@@ -1,0 +1,146 @@
+@import '../ui/tokens.css';
+
+/* The window is exactly the card: transparent chrome, the field drawn inside.
+   Height is fixed in src/main/windows.ts (QUICK_ASK_FIELD) — keep them equal. */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+}
+
+#shell {
+  box-sizing: border-box;
+  /* Inset from the window edge: a stroke flush with it loses its antialiased
+     corner pixels, so the border looks broken right where it curves. */
+  position: absolute;
+  inset: 2px;
+  display: flex;
+  flex-direction: column;
+  border-radius: var(--radius-base);
+  border: 1px solid var(--line);
+  background: var(--raised);
+  box-shadow: var(--elev-card);
+}
+
+/* The same bloom the overlay bubbles make: a settling pop, blur, and fade. */
+#shell.bloom {
+  animation: bloom 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes bloom {
+  from {
+    opacity: 0;
+    transform: scale(0.88);
+    filter: blur(5px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+    filter: blur(0);
+  }
+}
+
+/* 12px above and below the line, 14px at the sides — the same inset as the
+   home composer and the overlay card body. */
+#row {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 46px;
+  padding: 12px 14px;
+}
+
+/* Highlighted text, shrunk to its first and last few characters. */
+#chip {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 4px;
+  max-width: 46%;
+  height: 22px;
+  padding: 0 7px 0 5px;
+  border-radius: 6px;
+  background: var(--wash);
+  color: var(--ink);
+  font: 500 12px/22px -apple-system, system-ui, sans-serif;
+}
+
+#chip[hidden] {
+  display: none;
+}
+
+.chip-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+#chip-label {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+#field {
+  box-sizing: border-box;
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  font: 400 13px/22px -apple-system, system-ui, sans-serif;
+}
+
+#field::placeholder {
+  color: var(--faint);
+}
+
+#field:focus {
+  outline: none;
+}
+
+/* 28px send sitting on 10px, matching the home composer's footer. */
+#foot {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  height: 38px;
+  padding: 0 12px 10px;
+}
+
+#hint {
+  font: 400 11px/1 -apple-system, system-ui, sans-serif;
+  color: var(--faint);
+}
+
+#send {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radius-xs);
+  background: var(--ink);
+  color: var(--on-ink);
+  cursor: pointer;
+}
+
+#send:hover:not(:disabled) {
+  background: var(--ink-hover);
+}
+
+#send:disabled {
+  opacity: 0.4;
+  cursor: default;
+}

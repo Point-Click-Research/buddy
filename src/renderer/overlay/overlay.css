@@ -1,0 +1,1357 @@
+@import '../ui/tokens.css';
+
+:root {
+  /* Overlay colors; the Appearance settings tab overrides these (overlay.ts). */
+  --dot-idle: #8e8e93;
+  --dot-speaking: #34c273;
+  --dot-buddy: #4aa8ff;
+  --dot-loading: #7c6cff;
+  --driving: #7c6cff;
+  --accent: #7c6cff;
+  --error: #e5484d;
+  --user-marks: #3d7bfd;
+  /* Glows and translucent fills, derived so they follow the colors above. */
+  --driving-soft: color-mix(in srgb, var(--driving) 25%, transparent);
+  --accent-soft: color-mix(in srgb, var(--accent) 25%, transparent);
+  --bubble-bg: color-mix(in srgb, var(--raised) 92%, transparent);
+  --bubble-text: var(--ink);
+  --bubble-muted: var(--muted);
+  --bubble-shadow: 0 4px 18px rgba(0, 0, 0, 0.12), 0 0 1px rgba(0, 0, 0, 0.08);
+  /* The same shadow as a drop-shadow filter, for SVG label bubbles (filters
+     can't consume box-shadow lists). */
+  --bubble-filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.12)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.08));
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bubble-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 1px rgba(0, 0, 0, 0.4);
+    --bubble-filter: drop-shadow(0 8px 24px rgba(0, 0, 0, 0.45)) drop-shadow(0 0 1px rgba(0, 0, 0, 0.4));
+  }
+}
+
+@property --disco-hue {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* Enter/exit scale for elements whose position is a JS-driven translate3d:
+   the scale must live inside that same transform (a separate `scale`
+   property would compose outside the translate and drag the element toward
+   the viewport origin), so JS appends `scale(var(--pop))` and CSS animates
+   the registered number. */
+@property --pop {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+/* The buddy dot's own enter/exit scale, kept separate so bubbles and the
+   dot can move on different curves. */
+@property --dot-pop {
+  syntax: '<number>';
+  inherits: false;
+  initial-value: 1;
+}
+
+html.disco {
+  animation: disco-hue 2.4s linear infinite;
+}
+
+@keyframes disco-hue {
+  to {
+    --disco-hue: 360;
+  }
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  /* The whole window ignores mouse events (set in main), but be explicit. */
+  pointer-events: none;
+  user-select: none;
+}
+
+#annotations,
+#drawings-layer,
+#marks-layer {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+/* While the talk chord is held, main gives this window the mouse and the
+   user draws marks: the whole surface takes pointer events (nothing may
+   fall through to the app underneath) under a crosshair cursor. */
+body.marking {
+  pointer-events: auto;
+  cursor: crosshair;
+}
+
+/* --- The draw tool ------------------------------------------------------ */
+
+/* Palette. Only these colours exist; the model names one and gets a value
+   chosen to stay legible over real windows. The named colours are fixed
+   because the model picks them for meaning; only the default is settable. */
+#drawings-layer {
+  --draw-accent: var(--accent);
+  --draw-red: #ff5a5f;
+  --draw-orange: #ff9f45;
+  --draw-yellow: #ffd54a;
+  --draw-green: #3ddc97;
+  --draw-blue: #4aa8ff;
+  --draw-purple: #b76cff;
+  --draw-white: #ffffff;
+  --draw-black: #14141a;
+}
+
+.draw {
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.draw.draw-shown {
+  opacity: 1;
+}
+
+/* Waiting for its marker in the spoken reply (Milestone 9c). */
+.draw.draw-pending {
+  opacity: 0;
+}
+
+.draw .draw-stroke {
+  fill: none;
+  stroke: var(--draw-current);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  filter: drop-shadow(0 0 3px rgba(0, 0, 0, 0.55));
+}
+
+.draw-color-accent {
+  --draw-current: var(--draw-accent);
+}
+.draw-color-red {
+  --draw-current: var(--draw-red);
+}
+.draw-color-orange {
+  --draw-current: var(--draw-orange);
+}
+.draw-color-yellow {
+  --draw-current: var(--draw-yellow);
+}
+.draw-color-green {
+  --draw-current: var(--draw-green);
+}
+.draw-color-blue {
+  --draw-current: var(--draw-blue);
+}
+.draw-color-purple {
+  --draw-current: var(--draw-purple);
+}
+.draw-color-white {
+  --draw-current: var(--draw-white);
+}
+.draw-color-black {
+  --draw-current: var(--draw-black);
+}
+
+.draw-width-thin .draw-stroke {
+  stroke-width: 2;
+}
+.draw-width-medium .draw-stroke {
+  stroke-width: 3.5;
+}
+.draw-width-thick .draw-stroke {
+  stroke-width: 6;
+}
+
+.draw-stroke-dashed .draw-stroke {
+  stroke-dasharray: 10 7;
+}
+.draw-stroke-dotted .draw-stroke {
+  stroke-dasharray: 2 6;
+}
+
+/* A highlighter is wide and translucent, so the content stays readable. */
+.draw-stroke-highlighter .draw-stroke {
+  stroke-width: 18;
+  stroke-opacity: 0.32;
+  stroke-linecap: butt;
+  filter: none;
+}
+
+.draw-fill-soft .draw-stroke {
+  fill: var(--draw-current);
+  fill-opacity: 0.18;
+}
+
+.draw-pulse .draw-stroke,
+.draw-pulse .draw-ink {
+  animation: draw-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes draw-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.draw-text {
+  fill: var(--draw-current);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  font-weight: 600;
+  paint-order: stroke;
+  stroke: rgba(0, 0, 0, 0.6);
+  stroke-width: 4;
+  stroke-linejoin: round;
+}
+
+.draw-text-small {
+  font-size: 15px;
+}
+.draw-text-medium {
+  font-size: 21px;
+}
+.draw-text-large {
+  font-size: 30px;
+}
+
+.draw-badge {
+  fill: var(--draw-current);
+  stroke: rgba(0, 0, 0, 0.45);
+  stroke-width: 2;
+}
+
+.draw-badge-number {
+  fill: #0d0d12;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  text-anchor: middle;
+  dominant-baseline: central;
+}
+
+/* Label bubbles — the draw tool's and the annotations' — wear the caption
+   bubble's chrome, so every piece of text Buddy puts on screen matches. */
+.draw-bubble-bg,
+.ann .label-bg {
+  fill: var(--bubble-bg);
+  stroke: var(--line);
+  stroke-width: 1;
+  filter: var(--bubble-filter);
+}
+
+.draw-bubble-text,
+.ann .label-text {
+  fill: var(--bubble-text);
+  font: 400 13px -apple-system, system-ui, sans-serif;
+}
+
+.draw-leader {
+  stroke-width: 2;
+  stroke-dasharray: none;
+}
+
+/* A pen stroke is an outline, so it is filled, not stroked. */
+.draw-ink {
+  fill: var(--draw-current);
+  stroke: none;
+}
+
+/* The dimming outside a spotlight. Dark enough to draw the eye, light
+   enough that the rest of the screen is still legible. */
+.draw-dim {
+  fill: rgba(8, 8, 14, 0.62);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .draw {
+    transition: none;
+  }
+  .draw-pulse .draw-stroke,
+  .draw-pulse .draw-ink {
+    animation: none;
+  }
+}
+
+/* --- Annotations ------------------------------------------------------- */
+
+.ann {
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.ann.show {
+  opacity: 1;
+}
+
+/* Glow only on the drawn shapes — labels stay crisp (see .label-bg). */
+.ann .shape,
+.ann .ping {
+  filter: drop-shadow(0 0 6px var(--accent-soft)) drop-shadow(0 0 2px var(--accent));
+}
+
+.ann .shape {
+  stroke: var(--accent);
+  stroke-width: 4;
+  stroke-linecap: round;
+  fill: none;
+}
+
+.ann .shape.filled {
+  fill: var(--accent);
+  stroke: none;
+}
+
+.ann .shape.soft {
+  fill: var(--accent-soft);
+  stroke: var(--accent);
+  stroke-width: 2.5;
+}
+
+/* Expanding "ping" ring around a point annotation. */
+.ann .ping {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  transform-box: fill-box;
+  transform-origin: center;
+  animation: ping 1.6s ease-out infinite;
+}
+
+@keyframes ping {
+  0% {
+    transform: scale(0.5);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+
+/* Label chrome lives with .draw-bubble-bg above: one bubble style for
+   everything Buddy writes on screen. */
+
+/* --- Cursor buddy ------------------------------------------------------ */
+
+/* Registered (like --disco-hue above) so it can transition: each state only
+   sets this color, and the gradient and glow below follow it smoothly —
+   otherwise every phase change snapped, since gradients can't transition.
+   It must inherit, or the ::before ring falls back to the initial purple. */
+@property --dot-color {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #7c6cff;
+}
+
+#buddy {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  /* The busy states (transcribing, thinking) wear this base color. */
+  --dot-color: var(--dot-loading);
+  --dot-soft: color-mix(in srgb, var(--dot-color) 35%, transparent);
+  background: radial-gradient(
+    circle at 35% 35%,
+    color-mix(in srgb, var(--dot-color) 40%, #fff),
+    var(--dot-color)
+  );
+  box-shadow: 0 0 10px 2px var(--dot-soft);
+  /* Out: shrink away quickly, fading as it goes. */
+  --dot-pop: 0;
+  opacity: 0;
+  transition:
+    opacity 0.18s ease-in,
+    --dot-pop 0.18s ease-in,
+    --dot-color 0.35s ease,
+    box-shadow 0.35s ease;
+  will-change: transform;
+  animation: breathe 3s ease-in-out infinite;
+}
+
+/* In: the dot pops up with a small overshoot — it arrives, it isn't faded
+   in. JS composes scale(var(--dot-pop)) into the cursor-following transform. */
+#buddy.visible {
+  --dot-pop: 1;
+  opacity: 1;
+  transition:
+    opacity 0.12s ease-out,
+    --dot-pop 0.45s cubic-bezier(0.26, 1.25, 0.4, 1),
+    --dot-color 0.35s ease,
+    box-shadow 0.35s ease;
+}
+
+/* Ring around the dot, used by the busy states. */
+#buddy::before {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: border-color 0.35s ease;
+}
+
+@keyframes breathe {
+  0%,
+  100% {
+    box-shadow: 0 0 8px 1px var(--dot-soft);
+  }
+  50% {
+    box-shadow: 0 0 14px 4px var(--dot-soft);
+  }
+}
+
+/* At rest (the always-follow setting) the dot wears its own quiet color and
+   sits still — no breathing, so idle never reads as busy. */
+#buddy[data-state='idle'] {
+  --dot-color: var(--dot-idle);
+  box-shadow: 0 0 8px 1px var(--dot-soft);
+  animation: none;
+}
+
+/* While listening the dot takes your color and its scale follows the
+   mic level (driven from JS, so no keyframe animation here). */
+#buddy[data-state='listening'] {
+  --dot-color: var(--dot-speaking);
+  box-shadow: 0 0 12px 3px var(--dot-soft);
+  animation: none;
+}
+
+#buddy[data-state='transcribing']::before,
+#buddy[data-state='thinking']::before {
+  border-top-color: var(--dot-color);
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    rotate: 360deg;
+  }
+}
+
+#buddy[data-state='speaking'] {
+  --dot-color: var(--dot-buddy);
+  box-shadow: 0 0 12px 3px var(--dot-soft);
+  animation: none;
+}
+
+#buddy[data-state='speaking']::before {
+  border-color: var(--dot-color);
+  animation: ripple 1.1s ease-out infinite;
+}
+
+@keyframes ripple {
+  0% {
+    transform: scale(0.7);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+#caption {
+  position: fixed;
+  top: 0;
+  left: 0;
+  max-width: 360px;
+  /* Grows with the message up to this cap, which is an exact multiple of the
+     18px line-height so the last visible line is never sliced in half. */
+  max-height: 378px; /* 21 lines */
+  overflow: hidden;
+  white-space: pre-wrap;
+  padding: 8px 12px;
+  border-radius: var(--radius-base);
+  background: var(--bubble-bg);
+  color: var(--bubble-text);
+  font: 400 13px/18px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--bubble-shadow);
+  border: 1px solid var(--line);
+  will-change: transform;
+}
+
+/* The bubble renders the same markdown as the chat window (shared parser in
+   renderer/shared/markdown.ts): code, bold, bullets — sized for a bubble. */
+#caption code {
+  padding: 0 3px;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--bubble-text) 10%, transparent);
+  font: 400 12px/18px ui-monospace, Menlo, monospace;
+}
+#caption pre {
+  margin: 4px 0;
+  padding: 4px 8px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--bubble-text) 8%, transparent);
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+#caption pre code {
+  padding: 0;
+  background: none;
+}
+/* Links render this way wherever the shared markdown renderer draws them:
+   the caption bubble, the confirmation card, the ask card. */
+.caption-link {
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+/* Buddy's train of thought while he drives: the same bubble, read as an
+   inner voice rather than something he said. Shorter, too — a thought is
+   glanced at between actions, not read to the end. The colour is quieter than
+   the bubble's own text; opacity is left alone, since the bloom-in owns it. */
+#caption.thought {
+  max-width: 300px;
+  max-height: 144px; /* 8 lines */
+  color: color-mix(in srgb, var(--bubble-text) 65%, transparent);
+  font-style: italic;
+}
+
+/* Bubbles bloom in — a scale-up (via --pop, composed into the JS-driven
+   transform), a settling blur, and a fade — and slip out faster than they
+   arrived. */
+#caption,
+#error-bubble,
+#activity {
+  --pop: 0.88;
+  opacity: 0;
+  filter: blur(5px);
+  transition:
+    opacity 0.16s ease-in,
+    filter 0.16s ease-in,
+    --pop 0.16s ease-in;
+}
+
+#caption.visible,
+#error-bubble.visible,
+#activity.visible {
+  --pop: 1;
+  opacity: 1;
+  filter: blur(0);
+  transition:
+    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    --pop 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* The caption is unhidden and shown in the same frame, so without these
+   first-frame values the reveal cuts instead of animating. */
+@starting-style {
+  #caption.visible,
+  #error-bubble.visible,
+  #activity.visible {
+    --pop: 0.88;
+    opacity: 0;
+    filter: blur(5px);
+  }
+}
+
+/* Compact red chip, same size language as the activity pill. Fully rounded
+   corners without the 999px stadium: that radius on wrapped text ate the
+   sides and sat on top of the reply. */
+#error-bubble {
+  position: fixed;
+  top: 0;
+  left: 0;
+  max-width: 280px;
+  overflow: hidden;
+  white-space: pre-wrap;
+  padding: 8px 14px;
+  border-radius: var(--radius-xs);
+  background: var(--error);
+  color: #fff;
+  font: 500 13px/18px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--bubble-shadow);
+  will-change: transform;
+}
+
+#activity {
+  position: fixed;
+  top: 0;
+  left: 0;
+  padding: 8px 14px;
+  border-radius: 99px;
+  background: var(--bubble-bg);
+  box-shadow: var(--bubble-shadow);
+  border: 1px solid var(--line);
+  color: var(--bubble-text);
+  font: 500 13px -apple-system, system-ui, sans-serif;
+  will-change: transform;
+}
+
+#activity[hidden] {
+  display: none;
+}
+
+#ask-selection {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 160000;
+  padding: 7px 14px;
+  border-radius: 99px;
+  background: var(--bubble-bg);
+  color: var(--bubble-text);
+  font: 500 13px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--bubble-shadow);
+  border: 1px solid var(--line);
+  pointer-events: auto;
+  cursor: pointer;
+  --pop: 1;
+  opacity: 1;
+  transition:
+    opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+    --pop 0.35s cubic-bezier(0.16, 1, 0.3, 1),
+    display 0.25s allow-discrete;
+}
+
+#ask-selection[hidden] {
+  display: none;
+  --pop: 0.9;
+  opacity: 0;
+  transition-duration: 0.16s;
+  transition-timing-function: ease-in;
+}
+
+@starting-style {
+  #ask-selection:not([hidden]) {
+    --pop: 0.9;
+    opacity: 0;
+  }
+}
+
+#ask-selection:hover {
+  background: var(--raised);
+}
+
+#buddy[data-state='error'] {
+  --dot-color: var(--error);
+}
+
+/* --- The corner: sources -------------------------------------------------- */
+/* Only its card takes the mouse. */
+
+#corner {
+  position: fixed;
+  top: 12px;
+  right: 12px;
+  z-index: 150000;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  pointer-events: none;
+}
+
+/* --- Sources -------------------------------------------------------------- */
+
+#sources {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 170px;
+  max-width: 300px;
+  padding: 6px;
+  border-radius: var(--radius-base);
+  background: var(--bubble-bg);
+  box-shadow: var(--bubble-shadow);
+  border: 1px solid var(--line);
+  /* Only this corner takes the mouse; the rest of the overlay stays through. */
+  pointer-events: auto;
+  transition:
+    opacity 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    display 0.3s allow-discrete;
+}
+
+/* `display: flex` above would otherwise beat the hidden attribute, leaving an
+   empty card in the corner. */
+#sources[hidden] {
+  display: none;
+  opacity: 0;
+  transform: translateY(-6px) scale(0.98);
+  transition-duration: 0.16s;
+  transition-timing-function: ease-in;
+}
+
+@starting-style {
+  #sources:not([hidden]) {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+}
+
+.sources-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 1px 4px 3px 6px;
+  color: var(--bubble-muted);
+  font: 600 10.5px -apple-system, system-ui, sans-serif;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+#sources-dismiss {
+  padding: 0 3px;
+  border: 0;
+  background: none;
+  color: var(--bubble-muted);
+  font: 600 14px/1 -apple-system, system-ui, sans-serif;
+  cursor: pointer;
+}
+
+#sources-dismiss:hover {
+  color: var(--ink);
+}
+
+#source-list {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2px;
+}
+
+.source {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px 4px 5px;
+  border: 0;
+  border-radius: 8px;
+  background: none;
+  color: var(--ink);
+  font: 500 12.5px -apple-system, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.source:hover {
+  background: var(--wash);
+  color: var(--ink);
+}
+
+.source-mark {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: #fff;
+  font: 700 10px/16px -apple-system, system-ui, sans-serif;
+  text-align: center;
+}
+
+.source-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.source-mark img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+}
+
+/* --- Live terminal (run_command) ------------------------------------------- */
+/* Wears the card chrome (see Cards), enter/exit included; only the monospace
+   voice is its own. */
+
+.terminal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#terminal-command {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: ui-monospace, 'SF Mono', Menlo, monospace;
+  font-size: 12px;
+}
+
+#terminal-status {
+  flex: 0 0 auto;
+  color: var(--bubble-muted);
+  font: 500 11px -apple-system, system-ui, sans-serif;
+}
+
+#terminal-output {
+  font: 400 11px/15px ui-monospace, 'SF Mono', Menlo, monospace;
+}
+
+/* --- Agent HUD ("Buddy is driving") ---------------------------------------- */
+
+/* Soft light breathing in from the screen edges — an aurora, not a frame.
+   Two gradient layers wear siblings of the driving color (one cooler, one
+   warmer) and cross-fade in counter-phase, so the light slowly travels
+   around the screen. Only opacity animates: the gradients paint once and
+   the drift stays on the compositor, even on a big display. */
+#driving-border {
+  position: fixed;
+  inset: 0;
+  /* A hairline of the color itself, so the screen still reads as framed. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--driving) 45%, transparent);
+  --glow-a: color-mix(in srgb, var(--driving) 30%, transparent);
+  --glow-b: color-mix(in srgb, color-mix(in srgb, var(--driving) 45%, #7bd8ff) 30%, transparent);
+  --glow-c: color-mix(in srgb, color-mix(in srgb, var(--driving) 55%, #ff9ecf) 26%, transparent);
+  transition:
+    opacity 0.6s ease,
+    display 0.6s allow-discrete;
+}
+
+#driving-border[hidden] {
+  display: none;
+  opacity: 0;
+  transition-duration: 0.35s;
+}
+
+@starting-style {
+  #driving-border:not([hidden]) {
+    opacity: 0;
+  }
+}
+
+#driving-border::before,
+#driving-border::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+#driving-border::before {
+  background:
+    radial-gradient(90% 55% at 50% 112%, var(--glow-a), transparent 62%),
+    radial-gradient(65% 45% at -8% 25%, var(--glow-b), transparent 64%),
+    radial-gradient(55% 40% at 108% 15%, var(--glow-c), transparent 64%);
+  animation: aurora 9s ease-in-out infinite;
+}
+
+#driving-border::after {
+  background:
+    radial-gradient(85% 50% at 50% -12%, var(--glow-b), transparent 62%),
+    radial-gradient(60% 55% at 112% 78%, var(--glow-a), transparent 64%),
+    radial-gradient(50% 45% at -10% 85%, var(--glow-c), transparent 64%);
+  animation: aurora 9s ease-in-out -4.5s infinite;
+}
+
+@keyframes aurora {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+#driving-pill,
+#call-pill {
+  position: fixed;
+  /* Bottom center: the top center is under the camera notch on MacBooks. */
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 16px;
+  border-radius: 99px;
+  background: var(--bubble-bg);
+  color: var(--bubble-text);
+  border: 1px solid var(--line);
+  font: 500 12.5px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--bubble-shadow);
+  transition:
+    opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    display 0.42s allow-discrete;
+}
+
+#driving-pill[hidden],
+#call-pill[hidden] {
+  display: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(12px);
+  transition-duration: 0.18s;
+  transition-timing-function: ease-in;
+}
+
+@starting-style {
+  #driving-pill:not([hidden]),
+  #call-pill:not([hidden]) {
+    opacity: 0;
+    transform: translateX(-50%) translateY(12px);
+  }
+}
+
+/* --- Call pill ("Cam · Call in progress") ---------------------------------- */
+/* Wears the driving pill's chrome; the dot's color and pulse say the state. */
+
+#call-pill {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  z-index: 200000;
+}
+
+#call-pill svg {
+  width: 13px;
+  height: 13px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: var(--bubble-muted);
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+#call-pill .call-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--bubble-muted);
+  animation: call-pulse 1.4s ease-in-out infinite;
+}
+
+#call-pill[data-state='started'] .call-dot {
+  background: var(--dot-speaking);
+}
+
+#call-pill[data-state='failed'] .call-dot {
+  background: var(--error);
+  animation: none;
+}
+
+#call-state {
+  color: var(--bubble-muted);
+}
+
+@keyframes call-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.disco {
+    animation: none;
+    --disco-hue: 320;
+  }
+  /* Everything keeps its fade but loses scale, blur, and drift. The pop
+     values still jump to their resting state; only opacity is animated. */
+  #buddy,
+  #buddy.visible {
+    transition:
+      opacity 0.2s ease,
+      --dot-color 0.35s ease,
+      box-shadow 0.35s ease;
+  }
+  #caption,
+  #error-bubble,
+  #activity,
+  #caption.visible,
+  #error-bubble.visible,
+  #activity.visible,
+  #ask-selection,
+  #ask-selection[hidden] {
+    filter: none;
+    transition:
+      opacity 0.2s ease,
+      display 0.2s allow-discrete;
+  }
+  .card,
+  .card[hidden],
+  #driving-pill,
+  #driving-pill[hidden],
+  #call-pill,
+  #call-pill[hidden] {
+    transform: translateX(-50%);
+    filter: none;
+    transition:
+      opacity 0.2s ease,
+      display 0.2s allow-discrete;
+  }
+  #call-pill .call-dot {
+    animation: none;
+  }
+  #sources,
+  #sources[hidden] {
+    transform: none;
+    transition:
+      opacity 0.2s ease,
+      display 0.2s allow-discrete;
+  }
+  #driving-border::before,
+  #driving-border::after {
+    animation: none;
+  }
+}
+
+/* --- Cards ----------------------------------------------------------------- */
+/* The one card chrome: centered above the bottom edge, with a quiet inset
+   body. The confirmation card and the live terminal both wear it. */
+
+.card {
+  position: fixed;
+  left: 50%;
+  bottom: 12%;
+  transform: translateX(-50%);
+  z-index: 200000;
+  max-width: 480px;
+  width: min(480px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 6px;
+  border-radius: calc(var(--radius-base) + 2px);
+  background: var(--bubble-bg);
+  color: var(--bubble-text);
+  font: 400 13px/18px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--bubble-shadow);
+  border: 1px solid var(--line);
+  filter: blur(0);
+  transition:
+    opacity 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    transform 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    filter 0.42s cubic-bezier(0.16, 1, 0.3, 1),
+    display 0.42s allow-discrete;
+}
+
+/* Closed: allow-discrete keeps the card rendered just long enough to slip
+   out — faster than it arrived. */
+.card[hidden] {
+  display: none;
+  opacity: 0;
+  transform: translateX(-50%) translateY(16px) scale(0.97);
+  filter: blur(6px);
+  transition-duration: 0.18s;
+  transition-timing-function: ease-in;
+}
+
+/* First rendered frame when a card opens: it rises from the bottom edge and
+   settles into focus. */
+@starting-style {
+  .card:not([hidden]) {
+    opacity: 0;
+    transform: translateX(-50%) translateY(16px) scale(0.97);
+    filter: blur(6px);
+  }
+}
+
+.card-body {
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+  border: 1px solid var(--line);
+}
+
+.card-body[hidden] {
+  display: none;
+}
+
+.card-title {
+  margin: 0 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.card-detail {
+  margin: 0;
+  max-height: 160px;
+  overflow: hidden;
+  color: var(--bubble-muted);
+  font: 13px/18px -apple-system, system-ui, sans-serif;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* The card's last row: how to answer on the left, the action on the right. */
+.card-foot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 30px;
+  padding: 6px 0 0 8px;
+}
+
+.card-hint {
+  flex: 1;
+  min-width: 0;
+  margin: 0;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 14px;
+  color: var(--bubble-muted);
+}
+
+/* A plain-language line under the detail, set off by a rule so the two read
+   as different registers (the thing itself vs. what it means). */
+.card-note {
+  margin: 8px 0 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--bubble-muted);
+}
+
+/* --- Tool confirmation card ---------------------------------------------- */
+
+#confirm,
+#ask {
+  pointer-events: auto;
+  user-select: text;
+  -webkit-app-region: no-drag;
+}
+
+#annotations {
+  pointer-events: none;
+}
+
+/* A destructive action's card: unmistakably not the usual "sure, Enter". */
+#confirm.danger {
+  border-color: color-mix(in srgb, var(--error) 55%, var(--line));
+}
+
+#confirm.danger .card-body {
+  border-color: color-mix(in srgb, var(--error) 40%, var(--line));
+  background: color-mix(in srgb, var(--error) 6%, var(--wash));
+}
+
+#confirm.danger .card-title {
+  color: var(--error);
+}
+
+#confirm .confirm-plan {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* The display rule above beats the browser's [hidden] rule, so the plan
+   editor needs this to disappear on non-plan cards. */
+#confirm .confirm-plan[hidden] {
+  display: none;
+}
+
+/* The plan itself, as tall as its text and no taller, scrolling past its cap. */
+#confirm .confirm-plan textarea {
+  field-sizing: content;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 58px;
+  max-height: 46vh;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  border: 0;
+  background: var(--wash);
+  /* A hairline drawn inside, soft enough to read as a surface, not a box. */
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bubble-text) 6%, transparent);
+  color: var(--bubble-text);
+  font: 400 13px/19px -apple-system, system-ui, sans-serif;
+  resize: none;
+  transition: box-shadow 0.18s ease;
+}
+
+#confirm .confirm-plan textarea:focus {
+  outline: none;
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--bubble-text) 16%, transparent);
+}
+
+/* An editable card with a title ("Send this message?", "To Matt") wears it
+   as a plain header over the field, not a second box stacked on it. */
+#confirm:has(.confirm-plan:not([hidden])) .confirm-body {
+  padding: 6px 8px 10px;
+  background: none;
+  border: 0;
+}
+
+#confirm:has(.confirm-plan:not([hidden])) .card-title {
+  margin-bottom: 2px;
+}
+
+/* Where it runs, a segmented choice on one soft track; only when both can
+   happen. The pick is lifted onto a chip rather than outlined. */
+#confirm .confirm-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  padding: 3px;
+  border-radius: var(--radius-sm);
+  background: var(--wash);
+}
+
+#confirm .confirm-mode[hidden] {
+  display: none;
+}
+
+#confirm .confirm-mode label {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  padding: 7px 10px;
+  border-radius: calc(var(--radius-sm) - 3px);
+  font-size: 11.5px;
+  line-height: 15px;
+  color: var(--bubble-muted);
+  cursor: pointer;
+  transition:
+    background-color 0.22s ease,
+    box-shadow 0.22s ease,
+    color 0.22s ease;
+}
+
+#confirm .confirm-mode label:hover {
+  background: color-mix(in srgb, var(--bubble-text) 4%, transparent);
+}
+
+#confirm .confirm-mode label:has(input:checked) {
+  background: var(--chip);
+  box-shadow: var(--elev-button-secondary);
+}
+
+#confirm .confirm-mode label:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: 1px;
+}
+
+#confirm .confirm-mode input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+#confirm .confirm-mode strong {
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--bubble-text);
+}
+
+/* Why the plan runs where it does, when that is not a choice. */
+.plan-note {
+  margin: 0;
+  padding: 0 4px;
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--bubble-muted);
+}
+
+.plan-note[hidden] {
+  display: none;
+}
+
+#confirm #confirm-start {
+  flex: none;
+  padding: 6px 16px;
+  border: none;
+  border-radius: var(--radius-xs);
+  background: var(--ink);
+  color: var(--on-ink);
+  font: 600 13px/18px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--elev-button);
+  cursor: pointer;
+}
+
+#confirm #confirm-start[hidden] {
+  display: none;
+}
+
+#confirm #confirm-start:hover {
+  background: var(--ink-hover);
+}
+
+#confirm #confirm-start:active {
+  box-shadow: var(--elev-button-pressed);
+}
+
+/* --- ask_user question card ------------------------------------------------ */
+
+#ask-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+
+#ask-options:empty {
+  display: none;
+}
+
+.ask-option {
+  padding: 8px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-xs);
+  background: var(--raised);
+  color: var(--bubble-text);
+  font: 500 13px/17px -apple-system, system-ui, sans-serif;
+  text-align: left;
+  cursor: pointer;
+}
+
+.ask-option:hover {
+  border-color: var(--focus);
+  background: var(--wash);
+}
+
+#ask-input {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 6px 0 0;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--wash);
+  color: var(--bubble-text);
+  font: 400 13px/18px -apple-system, system-ui, sans-serif;
+  box-shadow: var(--elev-input);
+}
+
+#ask-input:focus {
+  outline: none;
+  border-color: var(--focus);
+}
+
+/* Vision assist: thicker strokes, larger type, bigger badges. */
+html.vision-assist .draw-width-thin .draw-stroke {
+  stroke-width: 4;
+}
+html.vision-assist .draw-width-medium .draw-stroke {
+  stroke-width: 6;
+}
+html.vision-assist .draw-width-thick .draw-stroke {
+  stroke-width: 9;
+}
+html.vision-assist .draw-text-small {
+  font-size: 22px;
+}
+html.vision-assist .draw-text-medium {
+  font-size: 28px;
+}
+html.vision-assist .draw-text-large {
+  font-size: 38px;
+}
+html.vision-assist .draw-badge-number {
+  font-size: 22px;
+}
+html.vision-assist #caption,
+html.vision-assist .caption {
+  font-size: 20px;
+  line-height: 1.35;
+}

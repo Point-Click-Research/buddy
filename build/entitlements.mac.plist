@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <!-- Electron requires JIT under the hardened runtime. -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <!-- Microphone for voice input. Screen recording has no entitlement;
+         it's granted per-user in System Settings > Privacy & Security. -->
+    <key>com.apple.security.device.audio-input</key>
+    <true/>
+    <!-- Apple Events: reading the frontmost app's selection, document and
+         browser URL goes through System Events. Without this the hardened
+         runtime blocks every one of those scripts. -->
+    <key>com.apple.security.automation.apple-events</key>
+    <true/>
+  </dict>
+</plist>

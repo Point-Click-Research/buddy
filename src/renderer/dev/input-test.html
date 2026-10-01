@@ -1,0 +1,82 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'"
+    />
+    <title>Buddy input test</title>
+    <style>
+      /* Every target sits at a FIXED position: src/main/agent/input-test.ts
+         clicks these exact coordinates. Move an element = update TARGETS there. */
+      body {
+        margin: 0;
+        width: 560px;
+        height: 640px;
+        position: relative;
+        background: #171522;
+        color: #eceafd;
+        font: 14px/1.5 -apple-system, system-ui, sans-serif;
+        user-select: none;
+      }
+      .target {
+        position: absolute;
+        box-sizing: border-box;
+      }
+      button.target {
+        border-radius: 10px;
+        border: 1px solid rgba(124, 108, 255, 0.5);
+        background: rgba(124, 108, 255, 0.18);
+        color: #eceafd;
+        font: inherit;
+        font-weight: 600;
+      }
+      #click-btn { left: 60px; top: 60px; width: 160px; height: 48px; }
+      #dbl-box {
+        left: 320px; top: 60px; width: 160px; height: 48px;
+        border: 1px dashed rgba(124, 108, 255, 0.5);
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+      }
+      #slider { left: 60px; top: 140px; width: 300px; }
+      #scroll-box {
+        left: 60px; top: 190px; width: 420px; height: 150px;
+        overflow: scroll;
+        border: 1px solid rgba(124, 108, 255, 0.35);
+        border-radius: 10px;
+        padding: 8px 12px;
+      }
+      input[type='text'],
+      textarea {
+        border-radius: 8px;
+        border: 1px solid rgba(124, 108, 255, 0.35);
+        background: #211e33;
+        color: #eceafd;
+        font: inherit;
+        padding: 8px 10px;
+      }
+      #short-text { left: 60px; top: 380px; width: 420px; height: 36px; }
+      #long-text { left: 60px; top: 440px; width: 420px; height: 110px; resize: none; }
+      #status {
+        position: absolute;
+        left: 60px; top: 580px; width: 440px;
+        font-size: 12.5px;
+        color: #8d88a8;
+      }
+      #slider-value { position: absolute; left: 380px; top: 138px; color: #b9afff; }
+    </style>
+  </head>
+  <body>
+    <button id="click-btn" class="target">Click me: <span id="click-count">0</span></button>
+    <div id="dbl-box" class="target">Double-click me</div>
+    <input id="slider" class="target" type="range" min="0" max="100" value="0" />
+    <span id="slider-value">0</span>
+    <div id="scroll-box" class="target"></div>
+    <input id="short-text" class="target" type="text" placeholder="Short text lands here" />
+    <textarea id="long-text" class="target" placeholder="Long text is pasted here"></textarea>
+    <p id="status">Waiting… run the tray → Input test.</p>
+    <script type="module" src="./input-test-page.ts"></script>
+  </body>
+</html>

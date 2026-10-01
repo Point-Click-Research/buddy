@@ -1,0 +1,24 @@
+/* The disco hue, one number the glow and the 3D light both ride. The shot
+   sets it each frame from the clock. */
+@property --disco-hue {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+
+/* The shockwave when the cursor first touches Buddy: a white-hot core and
+   the whole disco wheel in rings, riding the hue as it whips round. Shot
+   centres it on the sphere and blows it out past the screen's edges. */
+.singularity {
+  background: radial-gradient(
+    circle closest-side,
+    #fff 0%,
+    #fff 5%,
+    hsl(var(--disco-hue) 100% 64%) 11%,
+    hsl(calc(var(--disco-hue) + 70) 100% 58%) 20%,
+    hsl(calc(var(--disco-hue) + 150) 95% 56% / 0.9) 32%,
+    hsl(calc(var(--disco-hue) + 230) 92% 58% / 0.6) 46%,
+    hsl(calc(var(--disco-hue) + 300) 90% 60% / 0.3) 60%,
+    transparent 74%
+  );
+}

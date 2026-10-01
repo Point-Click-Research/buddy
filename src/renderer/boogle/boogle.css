@@ -1,0 +1,61 @@
+@import '../ui/tokens.css';
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: var(--plain-white);
+  color: var(--ink);
+  font: 500 15px/1.25 -apple-system, BlinkMacSystemFont, 'SF Pro Text', system-ui, sans-serif;
+}
+
+main {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  height: 100%;
+  /* A little above centre, where a search page's bar sits. */
+  padding: 0 24px;
+  box-sizing: border-box;
+  justify-content: center;
+  transform: translateY(-8vh);
+}
+
+/* Buddy's icon; boogle.ts sets the image. */
+#buddy {
+  width: 84px;
+  height: 84px;
+  background: center / contain no-repeat;
+}
+
+h1 {
+  margin: 0;
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+}
+
+#search {
+  width: min(560px, 100%);
+}
+
+input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 48px;
+  padding: 0 20px;
+  border: 1px solid var(--line);
+  border-radius: 24px;
+  background: var(--raised);
+  color: inherit;
+  font: inherit;
+  box-shadow: var(--elev-input);
+  outline: none;
+}
+input:focus {
+  border-color: var(--focus);
+}
+input::placeholder {
+  color: var(--faint);
+}
