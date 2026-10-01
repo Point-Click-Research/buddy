@@ -1,6 +1,6 @@
 # Your agent shouldn't hold your credit card
 
-_Draft, October 2026._
+October 2026. Author: Zach Sweedler.
 
 Every agent that can buy things has to answer one question: how does it pay?
 
