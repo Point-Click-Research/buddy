@@ -167,9 +167,10 @@ Then give it a brain, one of three ways:
 - **Local models**, free: install [Ollama](https://ollama.com) and download a
   model under Settings → Developer → API keys → **Local**. See
   [Offline, on a laptop](#offline-on-a-laptop) for what runs locally.
-- **A Buddy account**, no keys at all: builds with the account service
-  configured (see `.env.example`) sign in with Google and run on Buddy's keys,
-  metered by plan. Your own keys still take over whenever you paste them.
+- **A Buddy account**, no keys at all: the builds from the website sign in
+  with Google and run on Buddy's keys, metered by plan. A build from this
+  repo has no account service. Your own keys still take over whenever you
+  paste them.
 
 Hearing needs no key: the ear is a Whisper model that downloads once (about
 90 MB) and runs on this Mac.

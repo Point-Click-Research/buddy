@@ -6,8 +6,9 @@ declare module '*?raw' {
 }
 
 // Build-time configuration electron-vite bakes into the main process from
-// .env (see .env.example). All optional: a build without them
-// has no Buddy account and runs on the user's own keys.
+// .env, which is not in the repo. All optional: a build without them has no
+// Buddy account and runs on the user's own keys. The values for an official
+// build are written down in the private buddy-cloud repo.
 interface ImportMetaEnv {
   readonly MAIN_VITE_BUDDY_API_URL?: string;
   readonly MAIN_VITE_SUPABASE_URL?: string;
