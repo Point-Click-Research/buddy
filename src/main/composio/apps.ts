@@ -4,7 +4,7 @@
 // GitHub alone is hundreds of tools, so they stay on Composio's side.
 
 import { shell } from 'electron';
-import { CONNECT_APPS, connectAppLabel, splitConnectAppTool } from '../../shared/connect-apps';
+import { connectAppLabel, splitConnectAppTool } from '../../shared/connect-apps';
 import type { AppConnection } from '../../shared/types';
 import type { ToolOutcome, ToolRegistry } from '../ai/tools';
 import { senderLabel } from '../automated-sender';
@@ -107,10 +107,17 @@ export async function disconnectApp(slug: string): Promise<{ ok: boolean; messag
 
 const NOT_READY = 'Sign in under Settings → Account, or paste a Composio key first.';
 
-/** Open the toolkit's Connect Link in the browser. */
+/** A Composio toolkit slug as the API spells them ("gmail", "google_calendar"). */
+const TOOLKIT_SLUG = /^[a-z0-9_-]+$/;
+
+/**
+ * Open the toolkit's Connect Link in the browser. Any Composio toolkit, not
+ * only the featured ones: the catalog is what the Apps page shows first,
+ * not what may be linked.
+ */
 export async function connectApp(slug: string): Promise<{ ok: boolean; message: string }> {
-  if (!CONNECT_APPS.some((app) => app.slug === slug)) {
-    return { ok: false, message: 'That app is not in the catalog.' };
+  if (!TOOLKIT_SLUG.test(slug)) {
+    return { ok: false, message: 'A toolkit slug is lowercase letters, digits, underscores, and hyphens, like "google_calendar".' };
   }
   const backend = appsBackend();
   if (!backend) return { ok: false, message: NOT_READY };

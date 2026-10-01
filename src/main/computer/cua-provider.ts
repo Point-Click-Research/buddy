@@ -111,25 +111,6 @@ export async function createCuaProvider(displayId: number, hooks: DriverSafetyHo
       return { observationId: observation.observationId, pid, windowId, app, title, rows };
     },
 
-    async focusAt(point) {
-      // Screen DIP -> this frame's pixels -> the driver's native pixels. The
-      // rails are told first, or the pointer's move reads as the user's.
-      const image = io.frames.toImage(point);
-      claimMouse(io.hooks, point.x, point.y, POINTER_TRAVEL_MS);
-      const native = io.frames.toNative(image.x, image.y);
-      const result = await io.call('click', {
-        target: DESKTOP_TARGET,
-        button: 'left',
-        count: 1,
-        x: Math.round(native.x),
-        y: Math.round(native.y),
-      });
-      const failure = toError(result);
-      if (failure) return failure;
-      await sleep(io.settleMs);
-      return null;
-    },
-
     targetApp: ({ name, input }) => describeTarget(name, input, io),
 
     // Only this task's session ends; the driver stays up for guide mode.

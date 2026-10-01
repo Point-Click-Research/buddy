@@ -63,9 +63,9 @@ describe('placing frames', () => {
   it('shifts a child frame\'s elements by where its iframe sits, and keeps unknown ones unplaced', () => {
     const owner = frameOwner(MAIN, CARD_FRAME)!;
     const rows = toTreeElements([
-      { frame: 0, snapshot: MAIN, offset: { x: 0, y: 0 } },
-      { frame: 1, snapshot: CARD_FRAME, offset: { x: owner.bounds!.x, y: owner.bounds!.y } },
-      { frame: 2, snapshot: { ...CARD_FRAME, url: 'https://lost.example/' }, offset: null },
+      { frame: 0, origin: 'https://shop.example', ancestors: [], snapshot: MAIN, offset: { x: 0, y: 0 } },
+      { frame: 1, origin: 'https://pay.example', ancestors: ['https://shop.example'], snapshot: CARD_FRAME, offset: { x: owner.bounds!.x, y: owner.bounds!.y } },
+      { frame: 2, origin: 'https://lost.example', ancestors: ['https://shop.example'], snapshot: { ...CARD_FRAME, url: 'https://lost.example/' }, offset: null },
     ]);
     // Row 0 is the page itself, sized to the viewport.
     expect(rows[0]!.role).toBe('window');
@@ -75,10 +75,14 @@ describe('placing frames', () => {
     expect(card.depth).toBe(2);
     const lost = rows.find((row) => row.token === nodeToken({ frame: 2, index: 0 }))!;
     expect(lost.bounds).toBeNull();
+    // Every row carries its own frame's origin and the origins above it, which is what the card fill gates on.
+    expect(rows[1]!.origin).toBe('https://shop.example');
+    expect(card.origin).toBe('https://pay.example');
+    expect(card.ancestors).toEqual(['https://shop.example']);
   });
 
   it('renders like a native window, off-view rows included', () => {
-    const rows = toTreeElements([{ frame: 0, snapshot: MAIN, offset: { x: 0, y: 0 } }]).map((row, i) => ({
+    const rows = toTreeElements([{ frame: 0, origin: 'https://shop.example', ancestors: [], snapshot: MAIN, offset: { x: 0, y: 0 } }]).map((row, i) => ({
       ...row,
       ref: `e${i + 1}`,
     }));

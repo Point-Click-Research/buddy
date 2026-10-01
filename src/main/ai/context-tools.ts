@@ -1,6 +1,7 @@
 // Guide-mode tools for documents, memories, skills, drafts, and past chats.
 
 import type { Tool } from '@anthropic-ai/sdk/resources/messages';
+import { app as electronApp } from 'electron';
 import { aboutMeText, addShopperEntry, getSettings } from '../settings';
 import { broadcastSettings } from '../settings-view';
 import { publishLinks } from '../sources';
@@ -12,6 +13,7 @@ import {
 } from '../reader/frontmost';
 import { readLocalDocument, resolveLocalPath } from '../reader/file';
 import { truncateForModel } from '../reader/truncate';
+import { namesFenced } from '../vault-fence';
 import { fetchPageText } from '../reader/web';
 import { productBrowseInstruction } from '../../shared/product-browse';
 import { canCheckout } from '../payment/checkout';
@@ -286,7 +288,9 @@ async function readFrontmostDocument(): Promise<ToolOutcome> {
 
     const rawPath = await frontmostDocumentPath();
     const path = rawPath ? resolveLocalPath(rawPath) : null;
-    if (path) {
+    // Buddy's own data folder (the encrypted card and keys) is never read
+    // into the model's context, even when the user has a file from it open.
+    if (path && !namesFenced(path, [electronApp.getPath('userData')])) {
       const text = truncateForModel(await readLocalDocument(path), limit);
       return { content: `${path}\n\n${text}` };
     }

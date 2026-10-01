@@ -37,6 +37,26 @@ describe('classifyCommand', () => {
     expect(level('git push origin main --force')).toBe('risky');
   });
 
+  it('blocks Keychain reads, which hold the keys to the saved card', () => {
+    expect(level('security find-generic-password -s "Buddy Safe Storage" -w')).toBe('blocked');
+    expect(level('/usr/bin/security find-internet-password -a me')).toBe('blocked');
+    expect(level('ls; security dump-keychain -d login.keychain')).toBe('blocked');
+    expect(level('echo $(security export -k login.keychain)')).toBe('blocked');
+    // Other security subcommands, and the word in other contexts, are fine.
+    expect(level('security list-keychains')).toBe('normal');
+    expect(level('grep -r security ~/project')).toBe('normal');
+  });
+
+  it("blocks a command that names Buddy's own data folder, however it is spelled", () => {
+    const fenced = ['/Users/z/Library/Application Support/Buddy', '~/Library/Application Support/Buddy'];
+    const fencedLevel = (command: string) => classifyCommand(command, fenced).level;
+    expect(fencedLevel('cat ~/Library/Application\\ Support/Buddy/config.json')).toBe('blocked');
+    expect(fencedLevel('cat "/Users/z/Library/Application Support/Buddy/config.json"')).toBe('blocked');
+    expect(fencedLevel("ls '/users/z/library/application support/buddy'")).toBe('blocked');
+    expect(fencedLevel('ls ~/Library/Application\\ Support/Other')).toBe('normal');
+    expect(level('cat ~/Library/Application\\ Support/Buddy/config.json')).toBe('normal');
+  });
+
   it('leaves ordinary commands alone', () => {
     expect(level('ls -la ~/Desktop')).toBe('normal');
     expect(level('mkdir -p ~/Desktop/Archive && mv ~/Desktop/*.png ~/Desktop/Archive/')).toBe('normal');

@@ -135,7 +135,7 @@ export class PageSession implements PageDriver {
           }
         }
       }
-      placed.push({ frame: number, snapshot, offset });
+      placed.push({ frame: number, origin: frame.origin, ancestors: ancestorOrigins(frame), snapshot, offset });
     }
     this.frames = frames;
     this.owners = owners;
@@ -356,6 +356,16 @@ export function keyEvent(combo: KeyCombo): {
     ...(modifiers === 0 || modifiers === MODIFIER_BITS['shift'] ? { text: key } : {}),
     ...(command ? { commands: [command] } : {}),
   };
+}
+
+/**
+ * The origins of the frames above one, innermost first, from the browser
+ * process's own frame tree. Nothing a frame says about itself is consulted.
+ */
+function ancestorOrigins(frame: WebFrameMain): string[] {
+  const origins: string[] = [];
+  for (let above = frame.parent; above; above = above.parent) origins.push(above.origin);
+  return origins;
 }
 
 function sleep(ms: number): Promise<void> {

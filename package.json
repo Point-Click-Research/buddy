@@ -19,7 +19,7 @@
     "publish": [
       {
         "provider": "github",
-        "owner": "Point-Click-Technologies",
+        "owner": "Point-Click-Research",
         "repo": "buddy-releases"
       }
     ],
@@ -78,7 +78,7 @@
     "typecheck": "tsc --noEmit -p tsconfig.node.json && tsc --noEmit -p tsconfig.web.json",
     "test": "vitest run",
     "dist": "electron-vite build && electron-builder",
-    "release": "electron-vite build && (gh release create v$npm_package_version --repo Point-Click-Technologies/buddy-releases --draft --title $npm_package_version --notes '' || true) && electron-builder --publish always"
+    "release": "electron-vite build && (gh release create v$npm_package_version --repo Point-Click-Research/buddy-releases --draft --title $npm_package_version --notes '' || true) && electron-builder --publish always"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.3",

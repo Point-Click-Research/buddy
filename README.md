@@ -1,93 +1,393 @@
 # Buddy
 
-Buddy is a personal assistant that lives on your Mac, next to your cursor.
-It sees your screen, hears you, and uses the computer the way you do. It buys
-the thing, books the table, makes the call, or shows you how, drawing right on
-the screen. The menu-bar icon, the chat window, and Settings are where you
-look back at a conversation or change how it works.
+**The open-source agent you can hand your credit card.**
 
-The screen, memory, browser, and saved card stay on this Mac. Your own keys
-work on every plan and stay in the OS keychain. Sign in to a Buddy account and
-it runs on Buddy's keys instead, metered by plan. A build with no account
-service runs on the keys you paste.
+![License: MIT](https://img.shields.io/badge/license-MIT-black.svg)
+![macOS 13+ · Apple Silicon](https://img.shields.io/badge/macOS-13%2B%20·%20Apple%20Silicon-black.svg)
+![TypeScript strict](https://img.shields.io/badge/TypeScript-strict-black.svg)
+![1,015 unit tests](https://img.shields.io/badge/tests-1%2C015%20passing-black.svg)
 
-## How it works
+Text your Mac from the airport: "buy the espresso machine we looked at,
+under $400." Buddy texts back a plan, you reply **YES**, and it checks out in
+its own browser on the store's own page, with the card you already have.
+The model names the fields; Buddy types the digits; the model, the logs, and
+the chat never see them.
 
-1. Hold **Control + Option** (configurable) and speak, then release.
-   Or press **Control + Option + A** (configurable) for always-on mode, where Buddy listens
-   continuously (Silero VAD, running locally) and answers whenever you finish
-   speaking.
-2. Buddy screenshots every display, transcribes your voice, and asks the model
-   with the screenshots and recent conversation as context.
-3. The answer streams into a caption near your cursor and into the chat
-   window, spoken sentence-by-sentence, and the model can draw on your
-   screen with `point`, `circle`, `arrow`, and `highlight` tools.
-4. Press **Escape** (or tap the hotkey) any time to cancel and clear the
-   drawings. They also dismiss themselves the moment you scroll or click
-   once the content under them moves, they no longer mark anything real.
+Most ways to let an agent pay hand it a credential. Buddy hands it nothing:
+no new account, no identity check, no store that has to support anything, and
+no server between you and the checkout. It works wherever a checkout page
+works, and the model holds nothing worth stealing.
 
-Buddy works in two modes. **Guide mode** is the default: it looks, talks, and
-draws, and never drives the mouse. **Agent mode** drives the computer to finish
-a task for you, and only after you approve a plan it is off until you enable
-it. Both modes can call tools from connected [MCP servers](#mcp-servers), such
-as web search.
+<!-- Demo video goes here. The shot: iPhone in frame texting "buy the
+espresso machine from earlier", the plan text arriving with the total, a
+YES, then a screen recording of Buddy's browser filling the checkout with
+the card fields masked in the transcript panel, then the "ordered" text
+landing on the phone. Thirty seconds. -->
 
-It knows you, and it can take on a task you could do at this computer. It is
-connected to your apps, the internet, and a phone line. It buys the thing,
-books the table, makes the call, restocks the groceries, handles the inbox, or
-shows you how, drawing right on the screen. It gets to things before you ask,
-and checks with you first when it matters. You can give it a recurring job,
-like a morning brief or watching for a reservation to open. Away from the desk,
-text it on iMessage and it handles the task from this Mac. If something needs
-you, it texts first. It is here as long as the Mac is awake.
+```bash
+git clone https://github.com/Point-Click-Research/buddy.git && cd buddy
+npm install && npm run dev
+```
 
-It also reads and writes in place:
+macOS 13+ on Apple Silicon, Node 22+. Grant the three permissions it asks for,
+then paste an [OpenRouter](https://openrouter.ai) key or point it at
+[Ollama](https://ollama.com) for free. Full steps under
+[Quick start](#quick-start). MIT licensed, any model, your keys or none.
 
-- **Whole documents.** Ask about a PDF, file, or web page and it reads the
-  entire thing, not just what's visible.
-- **Highlight and ask.** Select text and an **Ask Buddy** button appears above
-  it. Click it for an explanation in the context of the page (and a web search
-  if one is connected), or hold the hotkey and ask your own question about it.
-  In native apps the selection is read through accessibility. Browsers publish
-  no accessibility tree, so there it copies the selection when you ask and puts
-  your clipboard back.
-- **Ramble, then insert.** Open a reply field, hold the hotkey, and say
-  “type a reply.” It drafts in your voice from what it remembers about you
-  (and a named skill, if you ask) and types it straight into the field, where
-  you can edit it like anything else you wrote.
-- **The apps.** For common apps and sites — Finder, Safari, Chrome, Mail,
-  Notes, Preview, System Settings, Terminal, Gmail, Google Calendar, Google
-  Docs, GitHub, Slack, Spotify, Figma, YouTube — it ships built-in skills
-  (where the controls live, the shortcuts, the gotchas) that load when that
-  app or site is frontmost. They live in Settings → **Skills**: editable and
-  disableable, never deletable.
-- **Your words.** Names and jargon live in Settings → **Ears** →
-  **Vocabulary**. How a word is spoken lives in Settings → **Voice** →
-  **Pronunciation**. What it remembers about you lives in Settings →
-  **Memory**.
+## How the card stays out of the model
 
-## Setup
+The card is one encrypted blob under a key in the macOS Keychain, and exactly
+one module decrypts it. To pay, the model calls `fill_payment` with element
+refs, never values. Five checks run before a digit moves, and each fails
+closed:
+
+1. **Fields are what they claim.** Role and label verified against the
+   element, not the model's description.
+2. **The form hasn't moved.** Re-read before filling.
+3. **The merchant and every field's frame are ones you chose.** HTTPS, the
+   tab's real URL, a domain you chose (never one the page suggested), and
+   each field's frame plus every frame above it on that domain or a listed
+   processor (Stripe, Shopify Payments, Adyen, Braintree, PayPal,
+   Checkout.com), by the origins the browser reports. A card input in an ad
+   frame, or a real Stripe frame an ad placed, is refused by name.
+4. **You approve, with the facts from the page.** Card, real host, and order
+   total, read by Buddy, never reported by the model. Placing the order is a
+   second approval.
+5. **Nothing downstream sees the card.** From the first keystroke until the
+   task ends, every action result is redacted and screenshots are withheld.
+
+The fill runs only in Buddy's own browser, over CDP, so the card never
+touches the clipboard. Where you're already signed in, like Amazon, Buddy
+checks out with the payment method saved there and no card is typed at all.
+
+The model also has a terminal and file tools, so the vault is fenced: any
+command that reads the Keychain or names Buddy's data folder is refused
+before a confirmation card is shown, and the coding tools and document
+reader skip the folder. That's a backstop. The real wall is the Keychain's
+own prompt, and it asks you: if a dialog mid-task says some process wants
+**Buddy Safe Storage**, deny it. Buddy never needs that approval.
+
+The code is `src/main/payment/`, six files, unit-tested. The full argument
+and threat model are in
+[docs/secrets-by-reference.md](docs/secrets-by-reference.md).
+
+**Prior work.** 1Password's
+[Secure Agentic Autofill](https://1password.com/blog/closing-the-credential-risk-gap-for-browser-use-ai-agents)
+set the shape for passwords: the agent asks, you approve, the credential is
+injected without the model holding it. [Agentcard's Vault](https://www.agentcard.sh)
+did it for payments: the agent types a dummy number, the request to the
+processor is intercepted, you approve on your phone, and the real card is
+swapped in. It's a service for companies that build agents, with a map of
+each processor behind it. Buddy does the swap on your Mac, into the form
+itself, with no server and no map.
+
+### Against the other ways an agent pays
+
+|                          | **Buddy**                                      | Virtual card issuers                | Network tokens                           | Card vaults                                   |
+| ------------------------ | ---------------------------------------------- | ----------------------------------- | ---------------------------------------- | --------------------------------------------- |
+| **What the agent holds** | Element refs, never a number                   | A full card number, CVC, and expiry | A token                                  | A dummy number that spends nothing            |
+| **What you set up**      | Save a card in Settings                        | An issuer account and a funding card | Enrollment with the network or wallet   | A card in the agent company's app, with a passkey |
+| **What the store needs** | A checkout page                                | To accept cards                     | An agentic-payments integration          | A processor the vault has mapped              |
+| **Per-purchase cap**     | The approval shows the total; a hard cap is next | Yes, the card's amount             | Yes, in the token's scope                | Approval per purchase, or a threshold you set |
+| **What the store sees**  | Your real card                                 | A one-time number                   | A token                                  | Your real card                                |
+| **Who you pay**          | Nobody, for the payment                        | The issuer                          | The network or wallet, through enrollment | The vault vendor, past its free tier         |
+
+_Patterns, not products, as of October 2026. Open an issue if we've got one
+wrong._
+
+A virtual card is better at one thing: limiting the blast radius if the
+agent spends wrong, because the number is capped and disposable. Until
+Buddy's own cap ships, the approval text is where you catch a bad total.
+Everything else cuts the other way: a virtual card is still a number the
+agent holds, a token works only where the merchant has integrated, and a
+vault puts a company's server and processor map between you and the checkout.
+
+## Two systems, not one big model
+
+Most computer-use agents send every micro-decision to a frontier model. Has
+the page finished loading? Which of these forty buttons is "Add to cart"? Did
+the click land? Each answer costs seconds and money, and the model answers
+from a screenshot, so it guesses at coordinates and sometimes clicks the
+lookalike.
+
+Buddy splits the work the way people do:
+
+- **System Two, the frontier model,** plans, reasons, and turns what you
+  asked into a plan you approve.
+- **System One, [Jev](https://typesafe.ai),** makes the bounded calls inside
+  the loop in well under a second: which element a step means, whether a
+  window has reached the state a task is waiting on, whether you finished the
+  step you were shown, what kind of ask just came in. Every question has a
+  fixed set of answers with "none of these" among them, and an unsure answer
+  hands the turn back instead of acting.
+
+Both systems work from the **accessibility tree** through the
+[Cua](https://github.com/trycua/cua) driver, not from guesses at a
+screenshot. An element ref is the real control, with its role and label, and
+a stale one is refused or re-bound by its description.
+
+**About Jev.** It's a hosted model from TypeSafe, a separate company, and it
+needs the network. It's optional: without a TypeSafe key, in Airplane Mode,
+or whenever a call fails or comes back unsure, every call site falls back to
+the behavior it had before Jev existed, which is asking the frontier model.
+You lose seconds per step, not capability. We use it because nothing we've
+found running locally answers "which of these refs is the Add to cart
+button" in under a second with calibrated confidence. If that changes, it's
+one file (`src/main/ai/jev.ts`) behind one interface.
+
+Is it finished? No. macOS is a long tail of apps with thin accessibility
+trees, custom controls, and windows that move under you, and plenty of steps
+still fall back to the frontier model or to pixels. But this is the shape we
+think holds up, and all of it is here to read, fork, and make better.
+
+## Quick start
+
+Requirements: macOS 13 or later on Apple Silicon, Node 22 or later.
 
 ```bash
 npm install
 npm run dev
 ```
 
-Then click the tray icon to open the chat window, and open Settings from the sidebar. In a build with the Buddy account
-service configured (`.env.example`), **Account** signs you in
-with Google. New accounts start on the waitlist. Buddy runs on its own keys.
-Paid plans are Pro ($20), Pro+ ($60), and Max ($200). Each includes a pool of
-model use, and extra usage past that pool is optional. Your own API keys work
-on every plan, and a build with no account service runs on them alone:
+Click the menu-bar icon to open the chat window, then open Settings from the
+sidebar. Grant **Microphone**, **Screen Recording**, and **Accessibility** when
+asked (in development they're attributed to your terminal).
 
-| Key                   | Used for                                                                                       | Where to get it                                              |
-| --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
-| OpenRouter            | Every cloud brain (Claude, GPT, Gemini, and the rest) through one key, billed at its own price | [openrouter.ai](https://openrouter.ai)                       |
-| ElevenLabs (optional) | Buddy's voice. Without it, the Mac's own voice speaks.                                         | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) |
-| TypeSafe (optional)   | Jev, the sub-second decider behind routing and computer use                                    | [typesafe.ai](https://typesafe.ai)                           |
+Then give it a brain, one of three ways:
 
-Hearing needs no key at all: the ear is a Whisper model that downloads once
-(about 90 MB) and runs on this Mac.
+- **Your own keys**, under Settings → Developer → **API keys**:
+
+  | Key                   | Used for                                                                                       | Where to get it                                              |
+  | --------------------- | ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+  | OpenRouter            | Every cloud brain (Claude, GPT, Gemini, and the rest) through one key, billed at its own price | [openrouter.ai](https://openrouter.ai)                       |
+  | ElevenLabs (optional) | Buddy's voice. Without it, the Mac's own voice speaks.                                         | [elevenlabs.io](https://elevenlabs.io/app/settings/api-keys) |
+  | TypeSafe (optional)   | Jev, the sub-second decider behind routing and computer use                                    | [typesafe.ai](https://typesafe.ai)                           |
+  | Composio (optional)   | Apps: Gmail, Calendar, Slack, Notion, GitHub, and the rest                                     | [composio.dev](https://composio.dev)                         |
+
+- **Local models**, free: install [Ollama](https://ollama.com) and download a
+  model under Settings → Developer → API keys → **Local**. See
+  [Offline, on a laptop](#offline-on-a-laptop) for what runs locally.
+- **A Buddy account**, no keys at all: builds with the account service
+  configured (see `.env.example`) sign in with Google and run on Buddy's keys,
+  metered by plan. Your own keys still take over whenever you paste them.
+
+Hearing needs no key: the ear is a Whisper model that downloads once (about
+90 MB) and runs on this Mac.
+
+Things to try: _"circle the search bar"_ · _"what's a derivative?"_ · _"plot
+1/x"_ · _"number the steps to save this file"_ · _"find a 12-inch cast iron pan
+under $50"_ · hold **Control + Option + Shift** and say _"open Spotify and play
+some jazz"_.
+
+## What else it does
+
+Everything below runs through the same loop: a model turn, tools behind an
+allow / ask / deny table, and a YES before anything spends, sends, or deletes.
+
+- **Drives your Mac.** Agent mode clicks, types, scrolls, opens apps, and
+  fills forms through the accessibility tree. Watch it on your screen, or
+  send it to **Buddy's browser**, its own window with sign-ins brought over
+  from Chrome, Arc, Dia, Brave, Edge, or Vivaldi, so your cursor stays put.
+- **Runs errands end to end.** Shopping, dining, and lodging search; checkout
+  with your saved card; phone calls placed through Bland; Mail, Messages,
+  Notes, Contacts, Shortcuts, Spotlight, and the terminal.
+- **Works in your apps.** Gmail, Google Calendar, Slack, Notion, GitHub,
+  Linear, Drive, and 35 more in a click under Settings → **Apps**, through
+  [Composio](https://composio.dev); any other Composio toolkit connects by
+  slug. Buddy drafts and triages mail, posts to Slack, files the Linear
+  issue, and reads the doc, asking before anything sends.
+- **Runs jobs on a schedule.** "Reorder paper towels every month", "tell me
+  when this drops under $200." Every 15 minutes up to monthly, with nobody at
+  the screen. Each run carries a note to the next, so "tell me when it drops"
+  knows the last price. Anything that would send, buy, or change something
+  waits for your OK, in the app or by text.
+- **Suggests what to do next.** Once or twice a day it reads your calendar,
+  inbox headers, open tabs, and recent conversations and offers a few
+  specific things to take on. The run can look but never act. Tap one, or let
+  it run the safe ones (a search, a draft) on its own.
+- **Sees, hears, talks, draws.** Hold **Control + Option** and speak. Buddy
+  screenshots every display, transcribes on-device with Whisper, and answers
+  into a caption by your cursor, spoken sentence by sentence, drawing on the
+  screen as it goes: rings, boxes, spotlights, arrows that route around what
+  they join, step badges, plotted functions. Circle something while you hold
+  the chord and "move this one over here" just works.
+- **Shows you how.** Guide mode looks, talks, and draws but never touches the
+  mouse. It walks you through a task one step at a time, noticing each step
+  land as you do it.
+- **Reads and writes in place.** A PDF, file, or web page gets read whole,
+  not just what's on screen. Highlight text for an **Ask Buddy** button. Say
+  "type a reply" and it drafts in your voice into the open field. Point it at
+  your editor and it reads, searches, and edits the project, each change as a
+  diff.
+- **Writes its own skills.** After an agent task, Buddy distills the run into
+  a recipe: the task as a template, what must already be true, the shortest
+  route that worked, and how to check it's done. Save it and the next similar
+  task goes straight there.
+- **Runs offline.** Local models through Ollama, tuned for a laptop. Flip on
+  **Airplane Mode** and nothing leaves the Mac. See
+  [Offline, on a laptop](#offline-on-a-laptop).
+
+## How Buddy compares
+
+The agents of 2026 split into camps. **Gateway agents** like
+[OpenClaw](https://openclaw.ai) and
+[Hermes Agent](https://hermes-agent.nousresearch.com) run headless on a box
+you never look at and answer you from a chat app. **Hosted assistants** like
+Instinct run your errands on a computer of their own. **Voice assistants**
+like [HeyClicky](https://www.heyclicky.com) and
+[VoiceOS](https://www.voiceos.com) sit on your desktop and listen, as closed
+services processed in their own cloud. **Lab desktop agents** from Anthropic,
+OpenAI, Meta, and Perplexity are tied to their own models.
+
+Buddy is the one that runs on the Mac you already use, in code you can read.
+
+|                            | **Buddy**                                                      | OpenClaw              | Hermes Agent                | Instinct                  | HeyClicky                        | VoiceOS                            |
+| -------------------------- | -------------------------------------------------------------- | --------------------- | --------------------------- | ------------------------- | -------------------------------- | ---------------------------------- |
+| **Where the work happens** | Your Mac: your apps, your screen, a browser with your sign-ins | The gateway's machine | Wherever it runs            | Instinct's cloud computer | Your Mac, processed in its cloud | Your Mac or PC                     |
+| **Doing the work**         | Accessibility tree via Cua, plus its own browser over CDP      | Browser and shell     | Browser and terminal        | Its cloud computer's apps | Background agents                | 175 actions across 21 integrations |
+| **Models**                 | Any via OpenRouter, or local via Ollama, fully offline         | Any                   | Any                         | Instinct's                | Its own, in its cloud            | Its cloud                          |
+| **Cost**                   | Free with your keys or local models; hosted plans optional     | Free                  | Free; optional subscription | Invite-only               | Free tier; $20 and $100 plans    | Trial; Pro from $11.99/mo          |
+| **Source**                 | MIT                                                            | MIT                   | MIT                         | Closed                    | Closed                           | Closed                             |
+
+None of the other five documents how it pays for things with your money,
+which is the row we care most about and the one described above.
+
+_As of October 2026, from each project's own docs and press coverage. Spot
+something out of date? Open an issue._
+
+**Where each one shines.** Pick **OpenClaw** if you want one community-owned
+agent behind every chat app you use, on a server that never sleeps. Pick
+**Hermes Agent** if you want a Python agent that runs headless anywhere, grows
+its own skills, and lives in your terminal and editor. Pick **Instinct** if
+you'd rather run nothing at all and text an assistant that has its own
+computer. Pick **HeyClicky** if you want a zero-setup buddy by your cursor
+and don't need to see or change the code. Pick **VoiceOS** if dictation is
+most of what you want, on Mac or Windows. Pick **Buddy** if you want the
+agent on the Mac you already use, driving your real apps, answering from your
+own Messages, and buying with your own card without the model ever seeing it.
+
+**The lab agents.** Claude with Cowork, ChatGPT Work, Muse for Mac, and
+Perplexity Personal Computer are strong desktop agents. They're closed, and
+each one runs its own vendor's models. Buddy runs any model, including one on
+your laptop, and you can read every line of the harness.
+
+## Under the hood
+
+Buddy is a TypeScript Electron app with a strict main/renderer split. If you
+build agents, this is the part you came for.
+
+- **Jev in every loop.** Each decision is one sub-second call over a bounded
+  set of options, and an answer below the confidence bar is never acted on.
+  - _Intent._ Before a brain is chosen, Jev reads the ask: does it need the
+    deep model, which tool will it likely end in, is it a task to propose.
+    Quick lookups land on the fast model and save seconds.
+  - _Elements._ A step can name its target in plain words ("the Add to cart
+    button") and Jev binds it to a ref, so the model acts in one call instead
+    of reading the window and then choosing. The same question re-binds a
+    stale ref.
+  - _Waiting._ `wait_for` polls the window and Jev judges a plain-language
+    condition ("the order has been placed") each time, with no model turn per
+    poll.
+  - _System One._ Once a plan is approved, the plain steps between frontier
+    turns go to Jev, after
+    [Cua's jev-use recipe](https://cua.ai/docs/how-to-guides/driver/jev-use).
+    A step that leaves the window unchanged hands the turn back.
+  - _Walkthroughs._ Jev decides when you've finished the step Buddy showed
+    you.
+- **One computer seam, three drivers.** Every action goes through a single
+  `ComputerProvider` interface: the in-process Cua driver (accessibility tree
+  and element refs), a pixel driver on nut.js, and Buddy's browser driven from
+  inside the page over CDP. A task picks its driver once and never swaps it
+  halfway through.
+- **It knows its input from yours.** Synthetic input is claimed before it's
+  sent, so the safety rails can tell Buddy's clicks from yours. Move the mouse
+  about 30px or type while it isn't, and the task pauses to ask. Excluded apps
+  (password managers, banking) hand control back. Hard limits default to 50
+  actions and 10 minutes.
+- **A card the model can use but never read.** Covered under
+  [How the card stays out of the model](#how-the-card-stays-out-of-the-model).
+  Two details that section leaves out: the card is filled only in Buddy's
+  browser, through the page's own text input, so it never touches the system
+  clipboard; and About me refuses anything that scans as a card number.
+- **An iMessage bridge with nothing in the middle.** Buddy reads `chat.db`
+  read-only through the system `sqlite3`, decodes the archived
+  `attributedBody` that recent macOS keeps message text in, and replies
+  through Messages. It answers only your number or this Mac's own addresses,
+  skips its own echoes, and starts from the newest row, so an old text is
+  never answered. Every confirmation card a tool would show becomes a text
+  that waits for an exact **YES**, **NO**, or **ALWAYS** ("yes but make it
+  Tuesday" is a new ask, not a yes). iPhone photos arrive as images, and on
+  power the Mac stays awake to answer. Channels sit behind one small
+  interface, so a second one is one more file.
+- **Thousands of app tools, none of them in the prompt.** GitHub alone is
+  hundreds of tools, and loading every toolkit's schemas would drown any model.
+  With Composio, the model never sees a toolkit schema: it searches for the
+  tool it needs, and Buddy runs that one. Composio tools share MCP's
+  allow / ask / deny table, so one permission model covers everything.
+  Writes that lose nothing (a Gmail draft, a label, archive, trash) run like
+  reads; sending and deleting for good still ask.
+- **Skills distilled from the action log.** A finished run of three or more
+  actions goes to the fast model with its log, and comes back as a recipe or
+  the single word `UNRELIABLE` when the route was too erratic to trust. Refs,
+  coordinates, and observation ids are banned from the recipe, since none
+  survive to the next run; retries and dead ends fold into the step that
+  finally worked. A recipe a saved skill already covers is never offered, and
+  distillation never costs the finished task anything.
+- **Jobs that behave like a cron you'd trust.** One tick a minute runs
+  what's due. Waking from sleep catches up with one run, never a burst, and a
+  failed run retries shortly instead of waiting a whole slot. Jobs that only
+  call APIs run a few at a time; a job that needs the Mac itself (terminal,
+  tabs, Messages) waits for an idle moment and runs alone.
+- **Headless turns that wait for you.** Jobs and texts run as full model turns
+  with nobody at the screen. Writes park as approvals in the job's
+  conversation or go to your phone as a YES/NO.
+- **Drawings are data, not code.** The model never emits SVG. It sends
+  structured JSON that Buddy validates and rebuilds into geometry. Every shape
+  anchors to a point in the screenshot it was measured in, or to a real UI
+  element, and none of it shows up in Buddy's own screenshots.
+- **MCP, first class.** HTTP or stdio servers, Claude Desktop config import,
+  secrets in the keychain, and a per-tool allow / ask / deny permission.
+- **Tested like it matters.** 1,015 unit tests across 99 files, over pure
+  modules: coordinate mapping, Jev's decisions, the shell command danger
+  classifier, card redaction, plan text, scheduling, and more.
+
+## Offline, on a laptop
+
+Most agents treat local models as an afterthought: point the harness at
+Ollama and hope. Buddy shapes every request for a 4B to 30B model running
+on the Mac in front of you.
+
+- **Built around Ollama's one cache.** Ollama reuses only the start of the
+  last prompt it read. Buddy keeps the system prompt and tools at the front,
+  byte for byte the same every turn, and moves the live context (the front
+  app, its notes) onto the latest ask, so a turn re-reads your words, not
+  every tool.
+- **Warm before you ask.** At launch, and whenever settings or tools change,
+  Buddy reads the prompt and tools into the cache, even while you're still
+  talking, and skips it when they're already there. The model stays loaded
+  for 30 minutes. The first question doesn't pay a minute-long cold
+  read.
+- **Context sized to your RAM.** Ollama drops the front of a prompt that
+  overflows, which is where the instructions live. Buddy asks for 16k tokens
+  on a 16 GB Mac and 32k on 32 GB or more.
+- **Less to read.** Tool descriptions are cut to their first sentence, tool
+  results to about 1,500 tokens, and schemas that small models reliably mangle
+  (drawing, task proposals) are left out. Reasoning models are asked to think
+  briefly, and the recommended Qwen builds are the instruct tags, not the ones
+  that think for hundreds of tokens before every reply.
+- **Graceful when the model can't see.** A text-only model that refuses
+  screenshots gets the same request again without them, with a note that it
+  can't see the screen, instead of a failed turn.
+- **No terminal.** Install Ollama and download a recommended model (picked by
+  RAM, from 8 GB to 32 GB) in Settings. Whisper runs inside Buddy on ONNX.
+
+**Airplane Mode** is one switch with a preflight checklist (ears, brain,
+voice) that shows what's ready and links to whatever isn't. With it on, Buddy
+itself sends nothing over the internet: Whisper hears you, Ollama answers,
+the macOS voice speaks, and remote MCP servers pause while stdio and
+localhost ones keep working. Offline, Buddy answers questions about your
+screen and uses local tools. Drawing, agent tasks, and Jev need the cloud,
+so they sit it out.
 
 ## Speed
 
@@ -115,21 +415,21 @@ you wait:
 Buddy needs three permissions (the panel shows what's missing and links to
 the right System Settings pane):
 
-- **Microphone** hear your questions
-- **Screen Recording** take the screenshots the model looks at (grant, then
+- **Microphone**: hear your questions
+- **Screen Recording**: take the screenshots the model looks at (grant, then
   relaunch the app)
-- **Accessibility** detect the global hold-to-talk hotkey, and move the
+- **Accessibility**: detect the global hold-to-talk hotkey, and move the
   mouse and keyboard in agent mode
 
 In development the permissions are attributed to whatever launches Electron
 (your terminal), not "Buddy". **Unsigned dev builds may lose permissions
-between rebuilds** re-grant them to your terminal if hotkeys or capture
+between rebuilds**, so re-grant them to your terminal if hotkeys or capture
 stop working.
 
 ## MCP servers
 
 Buddy can connect to [Model Context Protocol](https://modelcontextprotocol.io)
-servers and let the model call their tools while it answers web search, for
+servers and let the model call their tools while it answers: web search, for
 example, when the answer isn't on your screen. Manage them in
 Settings → **MCP servers**, which shows each server's status and its tools.
 
@@ -138,9 +438,9 @@ on that server talks to Exa directly instead.
 
 **Anything else.** Settings → **MCP servers** takes either transport:
 
-- **HTTP** a URL plus headers, for hosted servers. Header values that look
+- **HTTP**: a URL plus headers, for hosted servers. Header values that look
   like secrets are encrypted with your OS keychain.
-- **stdio** a command, arguments, and environment, for servers that run
+- **stdio**: a command, arguments, and environment, for servers that run
   locally. ⚠ A stdio server runs a program on this computer with your user's
   permissions, so only add commands you trust.
 
@@ -149,11 +449,11 @@ paste a config you already have.
 
 The model sees each tool as `<server>__<tool>`, and every tool has a permission:
 
-| Permission | Behavior                                                                                                    |
-| ---------- | ----------------------------------------------------------------------------------------------------------- |
-| `allow`    | Runs without asking. The default for tools the server marks read-only.                                      |
-| `ask`      | Shows a confirmation card first Enter or “yes” allows, Esc or “no” denies. The default for everything else. |
-| `deny`     | Never runs.                                                                                                 |
+| Permission | Behavior                                                                                                     |
+| ---------- | ------------------------------------------------------------------------------------------------------------ |
+| `allow`    | Runs without asking. The default for tools the server marks read-only.                                       |
+| `ask`      | Shows a confirmation card first. Enter or “yes” allows, Esc or “no” denies. The default for everything else. |
+| `deny`     | Never runs.                                                                                                  |
 
 Tool results are truncated to 12,000 characters (configurable) before they
 reach the model, with a note that they were cut. Any links a result mentions
@@ -163,23 +463,24 @@ you can keep typing. It stays until you press its × or ask your next question. 
 `http` and `https` links are ever opened, since tool results are untrusted
 input.
 
-Site icons come from Google's favicon service, cached per site for the session
-the one place Buddy tells a third party anything about page content (the
+Site icons come from Google's favicon service, cached per site for the session.
+That is the one place Buddy tells a third party anything about page content (the
 hostname of a link). Sites without an icon fall back to a lettered mark. Remote-server OAuth isn't
 supported yet: API keys in headers or the URL only.
 
 ## Drawing
 
-Buddy draws on your screen while it talks hand-sketched by default, each
+Buddy draws on your screen while it talks, hand-sketched by default, each
 stroke tracing itself on as if drawn live. Ask it to circle something, connect
 two panels with an arrow, number the steps of a task, or sketch something
-freeform, and the shapes appear over your real windows, synced to its voice:
-a shape can wait until the sentence that mentions it is spoken.
+freeform, and the shapes appear over whatever is on screen, Buddy's own chat
+window included, so a typed question gets drawn on too. When Buddy is
+speaking, a shape can wait until the sentence that mentions it is spoken.
 
 What it can draw: lines, paths and polygons; rings and boxes (including
 `spotlight`, which dims everything except the thing it means); arrows and
 connectors that route around what they join; callouts, step badges and text;
-pen strokes; and the teaching set plotted functions, axes, grids, measured
+pen strokes; and the teaching set: plotted functions, axes, grids, measured
 angles, dimension lines, brackets, underlines. Measurement shapes stay
 clean-lined rather than sketchy, because a wobbly plotted curve is
 misinformation.
@@ -250,8 +551,9 @@ While a task runs, in either place:
 - **It never types secrets.** Passwords, one-time codes, and government ID
   numbers are off limits. Buddy hands those steps back to you and continues
   afterwards. The card saved under Settings → **Checkout Forms** is the one
-  exception: on a checkout you approved, Buddy types it in. The model never
-  sees those digits, and it never types any other card.
+  exception: on a checkout you approved, in Buddy's own browser, Buddy types
+  it in. The model never sees those digits, and it never types any other
+  card.
 - **Excluded apps hand back control.** If a password manager, banking, or
   payment app is in front, the agent pauses. The list is prefilled and editable.
 - **Limits**: 50 actions and 10 minutes per task by default. It stops and says
@@ -266,7 +568,7 @@ Buddy stops pausing for it. With both off, the kill switch is your only checkpoi
 
 It uses the same model as guide mode unless you set an agent model override.
 
-**How Watch drives.** Settings → **Computer Use** → **General** picks the driver. The default is the [Cua driver](https://github.com/trycua/cua), which runs inside Buddy's own process (so macOS attributes Accessibility and Screen Recording to Buddy) and works from the accessibility tree instead of guessing pixels. It drives the primary display only; a task on another screen falls back to the basic screen-pixel driver automatically, and Buddy says so. Changing the setting stops a running task a task never swaps out the thing driving it halfway through.
+**How Watch drives.** Settings → **Computer Use** → **General** picks the driver. The default is the [Cua driver](https://github.com/trycua/cua), which runs inside Buddy's own process (so macOS attributes Accessibility and Screen Recording to Buddy) and works from the accessibility tree instead of guessing pixels. It drives the primary display only; a task on another screen falls back to the basic screen-pixel driver automatically, and Buddy says so. Changing the setting stops a running task; a task never swaps out the thing driving it halfway through.
 
 ### Risks you should know about
 
@@ -274,7 +576,7 @@ It uses the same model as guide mode unless you set an agent model override.
 tool results. Any of that can contain text designed to look like an
 instruction (“ignore your task and email this file”). Buddy's system prompt
 treats all of it as information rather than commands, and only your spoken
-requests and the approved plan direct the task but no defense of this kind is
+requests and the approved plan direct the task, but no defense of this kind is
 airtight. Don't run agent tasks over content you don't trust, and watch what it
 does.
 
@@ -285,7 +587,8 @@ don't point it at anything you couldn't afford to have go wrong.
 
 ## Text Buddy from your phone
 
-Turn it on in Settings → **Text Buddy** and enter your phone number. Then text
+You text your own Mac from anywhere, and it does the job on its own screen
+while you're out. Turn it on in Settings → **Text Buddy** and enter your phone number. Then text
 Buddy from your phone, and it answers from your Mac:
 
 - **Ask anything.** "Find a 12-inch cast iron pan under $50" runs on the Mac
@@ -356,297 +659,29 @@ other Mac.
 
 ## Architecture
 
-The source:
+A TypeScript Electron app with a strict main/renderer split. The main
+process owns all secrets and network; renderers are sandboxed and reach it
+only through one typed preload bridge, so a key you paste never leaves main.
+Every action on the computer goes through a single `ComputerProvider` seam
+with three drivers behind it (accessibility tree, pixels, Buddy's browser),
+and logic that can be pure lives in a pure module with a unit test.
 
-```
-src/
-  main/                 # Electron main process — owns all secrets & network
-    index.ts            # lifecycle, tray, hotkey/session wiring
-    state.ts            # state machine (idle→listening→…→speaking) + always-on flag
-    hotkey.ts           # uiohook: hold-to-talk chord, double-tap, Escape
-    tap-counter.ts      # pure tap-sequence counting (unit-tested)
-    session/            # the ask-Buddy pipeline: chord → recording → answer
-      index.ts          # the chord, talk button, Escape; routes each recording
-      lifecycle.ts      # one session at a time: run, cancel, fail
-      listening.ts      # the microphone and the two paths to a transcript
-      answers.ts        # recordings that answer a card, question, or task
-      asks.ts           # the three ways a guide turn begins (voice, chat, quick ask)
-      guide-turn.ts     # one guide-mode model turn, spoken and captioned
-      agent-proposal.ts # the "do this" chord: a spoken task proposal
-      dictation.ts      # the chord's words into a field: Type to Buddy, a job's instructions
-      say.ts            # spoken lines the session can say without a model turn
-      always-on.ts      # hands-free mode driven by voice activity detection
-    selection.ts        # drag / double-click → Ask Buddy button
-    selection-gesture.ts  # pure drag/double-click rules (unit-tested)
-    quick-ask.ts        # Type to Buddy box, summoned by shake / double-tap / chord
-    shake.ts            # pure cursor-shake detection (unit-tested)
-    highlight-chip.ts   # abbreviated highlight card in the Type to Buddy field (unit-tested)
-    activity.ts         # shimmer pill: what Buddy is doing between speeches
-    chat/
-      conversations.ts  # persisted threads + active conversation for home & voice
-      title.ts          # names a conversation from how it opened (fast model)
-      agent-context.ts  # what a finished agent task leaves in model context (unit-tested)
-    sources.ts          # tool-result links → overlay, panel, and chat record
-    links.ts            # parse URLs out of tool results (unit-tested)
-    favicon.ts          # site icons for source chips
-    run-command.ts      # run_terminal_command + live terminal panel
-    command-danger.ts   # shell command safety classifier (unit-tested)
-    media.ts            # media_control tool (volume, skip, mute)
-    reader/             # what Buddy can read without driving the UI
-      frontmost.ts      # app, URL, path, selection via AppleScript (unit-tested)
-      web.ts            # fetch URL + HTML→text (unit-tested)
-      file.ts           # local text/PDF paths
-      copy.ts           # copy selection when API read is not enough
-      truncate.ts       # cap document size for the model
-      ocr.ts            # screen text when accessibility text is missing
-    marks/              # hold-to-talk ink: strokes → user drawn marks on the screenshot
-      marks.ts          # turn coordinator + screenshot pairing
-      classify.ts       # stroke kind: circle, arrow, … (unit-tested)
-      layout.ts         # fit marks into model screenshots (unit-tested)
-      elements.ts       # mark ↔ window element matching (unit-tested)
-      transcript.ts     # spoken numbers tied to marks (unit-tested)
-      images.ts         # mark crops for the model (unit-tested)
-      context.ts        # mark metadata for prompts
-      dev-view.ts       # dev-only window: exactly what the model saw last turn
-    capture.ts          # per-display screenshots with coordinate metadata
-    coords.ts           # pure screenshot-pixel ↔ screen-DIP mapping (unit-tested)
-    annotations.ts      # point_at: element refs vs screenshot coords (unit-tested)
-    drawing/            # draw / update_drawing / erase overlay shapes
-      tools.ts          # tool registry wiring + per-display overlay IPC
-      validate.ts       # model calls → geometry (unit-tested)
-      build.ts          # shape builder dispatch
-      anchors.ts        # mark/frame/window anchor resolution
-      geometry.ts       # boxes, angles, padding (unit-tested)
-      read.ts           # read a shape's fields once, for every builder
-      builders/         # basic, chart, geometry, freeform shape builders
-      pen.ts            # natural pen strokes
-      schema.ts         # the draw tool's JSON the model is allowed to send
-      plot.ts           # y = f(x) with an allowlisted expression parser (unit-tested)
-      svg-path.ts       # Buddy's own SVG path parser (unit-tested)
-      gallery.ts        # saved drawing presets
-      demo.ts           # the dev drawing gallery
-      store.ts          # persisted gallery entries
-    windows.ts          # overlay/panel/home/settings/recorder windows, cursor poller
-    tray-icon.ts        # menu-bar icon states
-    settings/           # electron-store settings + safeStorage-encrypted API keys
-      index.ts          # derived views: enabled skills, checkout details, shopper memory
-      store.ts          # read and write; runs migrations first
-      defaults.ts       # every setting's starting value
-      sanitize.ts       # what a renderer's patch may and may not store
-      migrations.ts     # one-time reshapings of older stored settings
-      secrets.ts        # API keys and app secrets, encrypted
-    settings-view.ts    # the SettingsView renderers get, and the one way to push it
-    account/            # sign-in, the plan, and extra usage
-      session.ts        # the Supabase session in safeStorage
-      loopback.ts       # the Google sign-in redirect on 127.0.0.1
-      credentials.ts    # Buddy's key or the user's, per provider
-      on-demand.ts      # the ask before going past a paid plan's pool
-      plan-gate.ts      # which plans may paste their own keys
-      plan-fit.ts       # the stored brain model, fitted to the plan
-    onboarding.ts       # the first-run walk
-    tour.ts             # the settings tour
-    updates.ts          # the packaged-app update check
-    models.ts           # per-provider model lists for the Settings menus
-    permissions.ts      # macOS permission checks & prompts
-    key-test.ts         # the Settings "Test" buttons
-    ipc.ts              # every ipcMain handler
-    log.ts              # tagged main-process logging
-    about-me.ts         # About me facts + card-number rejection (unit-tested)
-    ai/
-      brain.ts          # the cloud brain (OpenRouter) with Ollama as the fallback (unit-tested)
-      openrouter.ts     # every cloud model through OpenRouter's chat API (unit-tested)
-      ollama.ts         # local Ollama streaming (unit-tested)
-      jev.ts            # Jev (TypeSafe): typed sub-second choices and yes/no judgements (unit-tested)
-      intent.ts         # Jev reads a spoken ask: deep model or fast, and the likely tool (unit-tested)
-      api-errors.ts     # provider-neutral meaning of an API failure
-      prompt-cache.ts   # where a Claude request marks its prompt cache (unit-tested)
-      effort.ts         # effort level per call, auto-detected from the turn (unit-tested)
-      router.ts         # fast vs frontier model, from the question alone (unit-tested)
-      loop.ts           # the multi-step tool loop, shared by both modes (unit-tested)
-      batch.ts          # which tool batch is executing
-      tools.ts          # tool registry: drawing, MCP, agent, Apple, terminal, …
-      turn-tools.ts     # one request's registry, for spoken turns and headless runs
-      prompt.ts         # guide- and agent-mode system prompts (unit-tested)
-      app-notes.ts      # built-in app skills, matched to the frontmost app/site (unit-tested)
-      history.ts        # turn assembly for the model (unit-tested)
-      context-tools.ts  # read_document, transcripts, memories, skills
-      insert-draft.ts   # insert_draft tool
-      locate-text.ts    # find on-screen text for annotations
-      locate-object.ts  # find a described thing on screen
-      budget-message.ts # the one-line notice when a plan's pool or meter is spent
-      turn-scope.ts     # talk, task, or job, so the API can meter the turn
-      open-settings.ts  # open a settings page from a turn
-    jobs/               # background jobs and the Suggestions run
-      store.ts          # saved jobs, parked writes, current Ideas batch
-      scheduler.ts      # one tick a minute; overdue jobs run once, never a burst
-      run.ts            # one job run: headless tools, parked asks, REMEMBER note
-      headless.ts       # one model turn with nobody at the screen
-      ideas.ts          # the Suggestions run
-      moments.ts        # a calendar moment worth a suggestion
-      approvals.ts      # allow / always-allow a parked write from the job's conversation
-      tool.ts           # create_job and run_job: jobs by voice or text
-    texts/              # text Buddy from your phone
-      bridge.ts         # the conversation: asks, texted questions and approvals, keep the Mac awake
-      turn.ts           # a text as a full turn: tools, propose_task, the agent run with the display lit
-      channel.ts        # what a channel is: enabled, tick, send, test
-      imessage.ts       # the iMessage channel: poll chat.db, reply through Messages
-      inbox.ts          # new texts from chat.db via read-only sqlite3
-      send.ts           # every channel that is on: job reports and approvals go to all of them
-      parse.ts          # handle matching, attributedBody text, YES/NO replies (unit-tested)
-    followalong/        # guided walkthroughs that never synthesize input
-      tools.ts          # start a walkthrough, park until a step is done
-      runner.ts         # sibling of the agent runner with its own abort flag
-      watcher.ts        # detect a finished step by re-reading the AX tree (unit-tested)
-    browser/            # Buddy's own browser window
-      window.ts         # the window: Buddy's chrome framing the page, expand / peek
-      page.ts           # drive the page from inside: DOM reads, CDP input
-      dom-snapshot.ts   # one-line-per-element page view for the model (unit-tested)
-      logins.ts         # bring saved logins in from the user's browsers
-    payment/            # Checkout — card digits never reach the model
-      card.ts           # the saved card, one safeStorage blob (unit-tested)
-      checkout.ts       # whether Buddy can place an order right now
-      fill-tool.ts      # fill_payment: Buddy fills the refs the model names (unit-tested)
-      merchant.ts       # HTTPS + user-chosen merchant gate (unit-tested)
-      redact.ts         # strip typed card values from later window reads (unit-tested)
-      purchase-tool.ts  # record_purchase: the order the confirmation page showed
-    shopify/
-      catalog.ts        # catalog_search via the Global Catalog UCP endpoint
-      format.ts         # product shape → result line (unit-tested)
-    exa/                # structured open-web search on the Exa key
-      client.ts         # one Exa request, shared by the tools below
-      product-search.ts # product_search
-      place-search.ts   # dining_search and lodging_search
-      format.ts         # product results → product lines (unit-tested)
-      place-format.ts   # place results → one line each (unit-tested)
-    product-line.ts     # one product line, identical across every source
-    composio/
-      apps.ts           # Composio sessions for Apps: search, run one tool, confirm writes
-      calendar.ts       # the connected calendar, for moments and suggestions
-      backend.ts        # Buddy's key or a pasted one
-    code/
-      workspace.ts      # path fence, write denials, exact edits, project-root walk (unit-tested)
-      detect.ts         # workspace auto-detection from the frontmost coding window
-      diff-view.ts      # each change opened as a diff in the user's editor (--diff CLI)
-      tools.ts          # list_files, read_file, search_code, edit_file, write_file
-    mcp/
-      manager.ts        # connect/reconnect servers, list tools, call tools
-      config.ts         # server storage, encrypted secrets, Claude Desktop import
-      permissions.ts    # per-tool allow / ask / deny (unit-tested)
-      confirm.ts        # confirmation + plan-approval cards
-      plan-text.ts      # agent plan card ↔ editable description
-      naming.ts         # <server>__<tool> sanitizing and mapping (unit-tested)
-      results.ts        # result truncation and image pass-through (unit-tested)
-      confirm-policy.ts # how a confirmation is answered with nobody at the screen (unit-tested)
-      builtin.ts        # Exa and Bland through Buddy's keys when the account holds them
-      bland-call.ts     # a phone call placed through Bland
-      tool-card.ts      # the confirmation card for one MCP tool call
-    apple/              # macOS app tools via JXA / AppleScript
-      jxa.ts            # osascript runner shared by callers
-      contacts.ts       # Contacts lookups
-      mail.ts           # Mail drafts and send
-      messages.ts       # Messages send
-      notes.ts          # Notes read/write
-      shortcuts.ts      # Shortcuts app
-      browser-tabs.ts   # Safari/Chrome tab listing
-      file-search.ts    # Spotlight file search
-    computer/           # everything that actually drives (or reads) the computer
-      driver.ts         # single shared Cua driver + cheap sessions
-      observer.ts       # read-only window reader for guide mode (unit-tested)
-      provider.ts       # ComputerProvider seam: descriptor, snapshot, act
-      actions.ts        # one action catalogue: family, input risk, schema
-      args.ts           # read + validate the model's action arguments
-      errors.ts         # typed error codes with recovery hints
-      frames.ts         # frameIds, staleness, unchanged-screen dedupe (unit-tested)
-      frame-store.ts    # resolve frameId → screenshot metadata
-      observations.ts   # window observation + element ref lifetimes (unit-tested)
-      judgement.ts      # Jev picks an element from plain words; judges a wait_for condition
-      tree.ts           # accessibility tree + element refs (unit-tested)
-      window-list.ts    # parse AX window list (unit-tested)
-      text-locations.ts # text bounding boxes on screen (unit-tested)
-      keys.ts           # key-combo parsing, provider-independent (unit-tested)
-      keycodes.ts       # key name → uiohook keycode, for claiming synthetic input
-      claim.ts          # how a provider declares its input to the safety rails
-      display-capture.ts  # one display's frames + coordinate mapping
-      cua-window.ts     # window-scoped Cua actions (unit-tested)
-      cua-io.ts         # low-level Cua I/O
-      nut-driver.ts     # InputDriver interface + nut.js implementation
-      cua-clipboard.ts  # write-only pasteboard, so long text is pasted not typed
-      basic-provider.ts # screen-family provider on nut.js (unit-tested)
-      cua-provider.ts   # in-process Cua Driver SDK provider (unit-tested)
-      browser-provider.ts # Buddy's browser behind the same seam (unit-tested)
-      select.ts         # pick the provider for a task, once, before it starts
-    agent/
-      agent.ts          # the approved-task runner (plan → act → observe)
-      system-one.ts     # Jev picks among bounded actions between model turns (unit-tested)
-      registry.ts       # the tools an agent task can call, assembled per run
-      pause-gate.ts     # actions wait here while a takeover / stall card is up
-      tool-schema.ts    # the `computer` tool, built from the descriptor (unit-tested)
-      tool-result.ts    # provider outcome → tool_result, incl. dedupe (unit-tested)
-      safety.ts         # kill switch, limits, takeover, excluded apps (unit-tested)
-      synthetic.ts      # pure synthetic-input filters (unit-tested)
-      control-tools.ts  # propose_task, ask_user, narrate, task_complete, …
-      checkout-intent.ts  # does a proposed task spend money → runs in Buddy's browser (unit-tested)
-      action-log.ts     # per-step log with thumbnails, savable as JSON
-      open-app.ts       # launch app by name (unit-tested)
-      distill.ts        # prototype: action log → reusable workflow recipe
-      distill-recipe.ts # pure recipe parsing, kept off electron-store (unit-tested)
-      input-test.ts     # dev-only: drive the test pages with no model
-    speech/
-      stt.ts            # the ear: the local Whisper model, downloaded on first use
-      whisper-local.ts  # on-device Whisper
-      previews.ts       # short clips of a voice before it is chosen
-      tts.ts            # sentence queue + ElevenLabs, macOS fallback (unit-tested)
-      sentences.ts      # split assistant text for TTS
-      dictionary.ts     # custom words for STT (unit-tested)
-      pronounce.ts      # spoken-form hints (unit-tested)
-      captions.ts       # live caption lines (unit-tested)
-      markers.ts        # TTS timing markers (unit-tested)
-  preload/index.ts      # the single typed contextBridge API (window.buddy)
-  renderer/
-    buddy.ts            # typed handle on window.buddy for every page
-    home/               # chat window: thread list, transcript, suggestions, job approvals
-    account/            # the sign-in screen
-    stage/              # the sign-in animation: the sphere, the cursor, one clock
-    ui/                 # shared React components + tokens for home and settings
-    shared/             # framework-free helpers (markdown, source chip) for the vanilla pages
-    overlay/            # per-display: dot, drawings, mark ink, caption, cards, HUD
-    panel/              # tray dropdown: state, transcript, response, action log
-    quick-ask/          # the Type to Buddy box
-    browser/            # chrome strip of Buddy's browser window
-    settings/           # settings window (Account, Brain, Computer Use, …)
-    recorder/           # hidden window: microphone, VAD, TTS playback
-    dev/                # dev-only: marks test, registration form, input test
-  shared/               # pure modules imported by both main and renderer
-    ipc.ts              # IPC channel names + the window.buddy preload contract
-    contracts.ts        # the Buddy API's request and response shapes (zod)
-    types.ts            # domain types: settings, conversations, marks, agent tasks
-    errors.ts           # errorMessage(unknown): the one way to read a thrown value
-    drawing.ts          # drawing geometry types shared with the overlay
-    hotkeys.ts          # hotkey chord parsing (unit-tested)
-    color.ts            # theme color tokens (unit-tested)
-    key-warning.ts      # settings warnings for risky key combos (unit-tested)
-    link-text.ts        # link display helpers (unit-tested)
-    jobs.ts             # job schedules, clock math, templates (unit-tested)
-    instructions.ts     # a job's instructions: inline app/tool cards and blanks (unit-tested)
-    use-cases.ts        # what each kind of ask needs, and where Settings turns it on (unit-tested)
-    product-browse.ts   # how Find Products opens pages
-    connect-apps.ts     # curated Composio toolkits shown on Apps
-    search-servers.ts   # which MCP servers count as web search
-    card-brand.ts       # card brand by leading digits + typing format (unit-tested)
-    us-states.ts        # two-letter state codes for checkout forms
-    plan-models.ts      # which cloud models a plan's allowlist covers
-    suggestions.ts      # when Suggestions run, and how many may auto-run
-    provider-access.ts  # whether a provider row is Buddy's key, the user's, or needs one
-    voices.ts           # the voice list the settings menu shows
-    tour.ts             # the settings tour's stops
-    checkout-words.ts   # words that mean a task is about to pay
-tests/                  # vitest unit tests for the pure modules (flat; named after the module)
+The full source tree, one line per file, is in
+[ARCHITECTURE.md](ARCHITECTURE.md).
+
+## Contributing
+
+Issues and pull requests are welcome. Before opening one:
+
+```bash
+npm run typecheck
+npm test
 ```
 
-Renderers are sandboxed with context isolation; they only talk to main
-through the typed preload bridge. A key you paste stays in the main process.
-A signed-in call sends the session token to the API, which swaps in Buddy's key.
-
+A few house rules keep the codebase small enough to hold in your head: one
+purpose per file, logic that can be pure goes in a pure module with a unit
+test in `tests/`, and shared UI comes from `src/renderer/ui` rather than being
+rebuilt.
 
 ## License
 

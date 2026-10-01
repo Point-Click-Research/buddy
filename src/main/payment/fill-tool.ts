@@ -2,19 +2,24 @@
 // them from the Keychain. The digits never pass through the model — not in
 // the tool call, not in its result, and (via redact.ts) not in the window
 // reads that follow. Every check fails closed: wrong-looking field, changed
-// window, unreadable or unapproved checkout URL.
+// window, unreadable or unapproved checkout URL, a field in a frame (or
+// under one) that is neither the merchant's nor a payment processor's.
+//
+// Only in Buddy's browser. There the page's URL is known exactly, the typing
+// is the page's own text input over CDP, and the system clipboard is never
+// touched; a desktop fill would need a paste, which leaves the number with
+// every clipboard manager and Universal Clipboard. So the desktop is refused.
 
-import { clipboard } from 'electron';
 import { type RegisteredTool, type ToolOutcome, type ToolRegistry, toolArgs } from '../ai/tools';
 import type { ComputerProvider, ResolvedObservation } from '../computer/provider';
-import { inView, windowBounds, type RefRow } from '../computer/tree';
+import type { RefRow } from '../computer/tree';
 import { logAction } from '../agent/action-log';
 import type { ActionGate } from '../agent/safety';
 import { createLogger } from '../log';
 import { requestConfirmation } from '../mcp/confirm';
 import { getSettings } from '../settings';
 import { cardSummary, loadPaymentCard, type PaymentCard } from './card';
-import { activeTabUrl, allowFill, trustMerchant } from './merchant';
+import { allowFill, allowFrame, trustMerchant } from './merchant';
 import { armRedaction } from './redact';
 
 const log = createLogger('fill-payment');
@@ -38,9 +43,13 @@ interface Slot {
   key: SlotKey;
   ref: string;
   value: string;
-  /** The verified element's identity, re-matched in fresh reads by role + label. */
+  /** The verified element's identity, re-matched in fresh reads by role + label + frame origin. */
   role: string;
   label: string;
+  /** The origin of the frame the verified field sits in; a look-alike in another frame is another field. */
+  origin: string | undefined;
+  /** The origins of the frames above it, innermost first; every one must be allowed too. */
+  ancestors: readonly string[];
   /** The driver's own handle on the verified node, to break a tie between look-alikes. */
   token: string | null;
 }
@@ -64,8 +73,8 @@ function fillPaymentTool(deps: FillDeps): RegisteredTool {
       description:
         "Fill a checkout form's card fields from the user's saved card. You name which refs are " +
         'the fields; Buddy fills them — the card values never pass through you, so never put ' +
-        'card details through set_value, type_into, or type. Only works on a browser checkout ' +
-        'page. Fill the shipping, contact, and billing-address fields yourself first — ' +
+        "card details through set_value, type_into, or type. Only works in Buddy's browser, on " +
+        'a checkout page. Fill the shipping, contact, and billing-address fields yourself first — ' +
         'get_about_me carries the saved addresses; after this returns, review the form and ' +
         'request_confirmation before placing the order.',
       input_schema: {
@@ -100,6 +109,12 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
   if (!card) return fail('No payment card is saved. The user can add one under Settings → Checkout Forms.');
 
   const provider = deps.provider();
+  if (provider.descriptor().id !== 'browser') {
+    return fail(
+      "Card details are only filled in Buddy's browser, so the card was not filled. " +
+        "Tell the user the checkout has to run there as a task in Buddy's browser. Never type card details yourself.",
+    );
+  }
   const observation = provider.resolveElements(args['observation_id']);
   if (!observation) {
     return fail('That observation has been replaced. Read the window again and send the current refs.');
@@ -109,7 +124,9 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
   if ('error' in wanted) return fail(wanted.error);
 
   // Every named ref must resolve to a field that reads as what it is claimed
-  // to be — the model may have been steered, the elements cannot.
+  // to be, by the element's own role and label. This catches a model steered
+  // by text on the page; a page that lies about its own fields is what the
+  // merchant and frame gates below are for.
   const slots: Slot[] = [];
   for (const want of wanted.slots) {
     const row = observation.rows.find((candidate) => candidate.ref === want.ref);
@@ -125,7 +142,7 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
           'Send refs whose labels plainly identify the card fields, or ask_user.',
       );
     }
-    slots.push({ ...want, role: row.role, label: row.name, token: row.token });
+    slots.push({ ...want, role: row.role, label: row.name, origin: row.origin, ancestors: row.ancestors ?? [], token: row.token });
   }
 
   // Re-read the window: the fill goes into the fields as they are now, not
@@ -141,17 +158,31 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
     }
   }
 
-  // The merchant gate: the tab's real URL, HTTPS, on a merchant the user chose.
-  // Buddy's browser knows its URL exactly; the user's browser is asked.
-  const url = current.url ?? (await activeTabUrl(current.app, current.title));
-  if (!url) {
-    return fail(
-      `Could not read the checkout tab's URL from ${current.app || 'this app'}. ` +
-        'Card details are only filled in a browser checkout, so the card was not filled.',
-    );
-  }
+  // The merchant gate: the page's real URL, HTTPS, on a merchant the user chose.
+  const url = current.url;
+  if (!url) return fail("Could not read the checkout page's URL, so the card was not filled.");
   const verdict = allowFill(url);
   if (!verdict.ok) return fail(verdict.reason);
+
+  // The frame gate: the URL says whose page this is, not whose iframe. Each
+  // field must sit in a frame of the merchant's own site or of a payment
+  // processor's hosted fields, and so must every frame above it: a real
+  // processor frame placed by an ad frame is the ad's to read. An ad or a
+  // chat widget on an approved page with an input labelled "Card number" is
+  // neither, and is refused by name.
+  for (const slot of slots) {
+    const chain = [slot.origin, ...slot.ancestors];
+    const bad = chain.findIndex((origin) => !allowFrame(origin, verdict.host));
+    if (bad < 0) continue;
+    const origin = chain[bad];
+    const from = origin && origin !== 'null' ? origin : 'an unknown origin';
+    const where = bad === 0 ? 'sits in a frame' : 'sits inside a frame placed by one';
+    return fail(
+      `The ${slot.key} field ${where} from ${from}, which is neither ${verdict.host} nor a payment ` +
+        "processor Buddy knows, so the card was not filled. Tell the user; they can enter the card on that " +
+        'store themselves. Never type card details yourself.',
+    );
+  }
 
   const check = await deps.gate(current.app);
   if (!check.ok) return fail(`Card not filled: ${check.reason}`);
@@ -169,10 +200,6 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
   // values and screen captures are withheld (see redact.ts and agent.ts).
   armRedaction(card);
 
-  // Inside Buddy's browser the typing is the page's own text input (CDP
-  // insertText), so the paste — a workaround for acting from outside — stays
-  // out. The focus click does not: see focusField.
-  const inPage = provider.descriptor().id === 'browser';
   const held: SlotKey[] = [];
   const unconfirmed: SlotKey[] = [];
   for (const slot of slots) {
@@ -193,11 +220,8 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
     if (typeof focused === 'string') return fail(`Could not focus the ${slot.key} field: ${focused}`);
     current = focused.window;
     const target = { observation_id: current.observationId, ref: focused.field.ref };
-    // Then type (on a plain input this is the fill) and, outside the page,
-    // paste over it: a real cmd+v goes through the page's input pipeline,
-    // which the driver's typing does not. Select-all first, so a retry
-    // replaces instead of appending. set_value is only for a field that
-    // refuses typing outright.
+    // Then type: in-page text input is the fill. set_value is only for a
+    // field that refuses typing outright.
     let next: ResolvedObservation | null;
     const typed = await provider.act({ name: 'type_into', input: { ...target, text: slot.value } }, signal);
     if (typed.error) {
@@ -205,7 +229,6 @@ async function fillPayment(input: unknown, signal: AbortSignal, deps: FillDeps):
       if (set.error) return fail(`Could not fill the ${slot.key} field: ${set.error.detail}`);
       next = windowAfter(provider, set);
     } else {
-      if (!inPage) await pasteOver(provider, slot.value, signal);
       const read = await freshRead(provider, current, signal);
       if (typeof read === 'string') return fail(read);
       next = read;
@@ -277,16 +300,9 @@ const DROPDOWN_ROLES = new Set(['combobox', 'popupbutton']);
  * Give the field genuine focus with a real click before anything is typed.
  * Hosted card fields (Shopify Payments, Stripe) take input only after a
  * trusted click: a value write or a script focus() leaves characters the
- * page wipes on blur. The first order that ever went through was the run
- * where the field had been clicked first, and that holds inside Buddy's
- * browser as much as outside it.
- *
- * In Buddy's browser the click is element-addressed (click_element scrolls
+ * page wipes on blur. The click is element-addressed: click_element scrolls
  * the field into view itself and re-reads the page, so the fill goes on
- * from that read). On the desktop it is a pointer click at the field's
- * centre, refused when the field is scrolled off-view since the pointer
- * would land on whatever is really there. A provider with neither relies on
- * typing alone. Returns the reason it could not, as text.
+ * from that read. Returns the reason it could not, as text.
  */
 async function focusField(
   provider: ComputerProvider,
@@ -295,51 +311,16 @@ async function focusField(
   window: ResolvedObservation,
   signal: AbortSignal,
 ): Promise<Focused | string> {
-  if (provider.descriptor().id === 'browser') {
-    if (DROPDOWN_ROLES.has(slot.role)) return { window, field };
-    const clicked = await provider.act(
-      { name: 'click_element', input: { observation_id: window.observationId, ref: field.ref } },
-      signal,
-    );
-    if (clicked.error) return clicked.error.detail;
-    const after = windowAfter(provider, clicked);
-    if (!after) return 'the page went away.';
-    const found = uniqueMatch(after.rows, slot);
-    return found ? { window: after, field: found } : 'the form changed under the click. Read the window and call fill_payment again.';
-  }
-  if (!provider.focusAt || !field.bounds) return { window, field };
-  const view = provider.resolveElements(window.observationId);
-  if (!inView(field.bounds, windowBounds(view?.rows ?? []))) {
-    return 'it is scrolled out of view. Scroll until the payment form is visible, read the window, and call fill_payment again.';
-  }
-  const refused = await provider.focusAt({
-    x: field.bounds.x + field.bounds.w / 2,
-    y: field.bounds.y + field.bounds.h / 2,
-  });
-  // A provider that refuses the pointer: fall through to typing alone.
-  if (!refused || refused.code === 'REFUSED') return { window, field };
-  return refused.detail;
-}
-
-/**
- * Select everything in the focused field and paste the value over it. The
- * value sits on the system pasteboard only for the paste itself; whatever
- * was there before comes back straight after. Best effort: a refused key
- * leaves the typed value as it stands.
- */
-async function pasteOver(provider: ComputerProvider, value: string, signal: AbortSignal): Promise<void> {
-  const selected = await provider.act({ name: 'key', input: { text: 'cmd+a' } }, signal);
-  if (selected.error) {
-    log.info(`paste skipped: keys refused (${selected.error.code})`);
-    return;
-  }
-  const previous = await clipboard.readText();
-  await clipboard.writeText(value);
-  try {
-    await provider.act({ name: 'key', input: { text: 'cmd+v' } }, signal);
-  } finally {
-    await clipboard.writeText(previous);
-  }
+  if (DROPDOWN_ROLES.has(slot.role)) return { window, field };
+  const clicked = await provider.act(
+    { name: 'click_element', input: { observation_id: window.observationId, ref: field.ref } },
+    signal,
+  );
+  if (clicked.error) return clicked.error.detail;
+  const after = windowAfter(provider, clicked);
+  if (!after) return 'the page went away.';
+  const found = uniqueMatch(after.rows, slot);
+  return found ? { window: after, field: found } : 'the form changed under the click. Read the window and call fill_payment again.';
 }
 
 /** The window after an action, or null when it went away. */
@@ -397,15 +378,16 @@ async function freshRead(
 
 /**
  * The verified field, found again in the freshest rows: the one element with
- * the same role and label. Hosted checkouts (Shopify Payments) keep a second,
- * hidden set of card iframes for a collapsed payment option; from inside a
- * hidden frame its input still reads as visible, but the frame has no place
- * on the page, so those rows have no bounds. The field with a place is the
- * one to fill; failing that, the very node that was verified. Anything still
- * ambiguous is a changed form.
+ * the same role and label in the same frame origin, so a look-alike that
+ * appears in another frame can never stand in for it. Hosted checkouts
+ * (Shopify Payments) keep a second, hidden set of card iframes for a
+ * collapsed payment option; from inside a hidden frame its input still reads
+ * as visible, but the frame has no place on the page, so those rows have no
+ * bounds. The field with a place is the one to fill; failing that, the very
+ * node that was verified. Anything still ambiguous is a changed form.
  */
 function uniqueMatch(rows: readonly RefRow[], slot: Slot): RefRow | null {
-  const matches = rows.filter((row) => row.role === slot.role && row.name === slot.label);
+  const matches = rows.filter((row) => row.role === slot.role && row.name === slot.label && row.origin === slot.origin);
   if (matches.length === 1) return matches[0]!;
   const placed = matches.filter((row) => row.bounds);
   if (placed.length === 1) return placed[0]!;

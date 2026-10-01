@@ -15,7 +15,6 @@ import {
   type AppFileSchema,
 } from '../../shared/contracts';
 import { readFile } from 'node:fs/promises';
-import { CONNECT_APPS } from '../../shared/connect-apps';
 import type { AppConnection } from '../../shared/types';
 import { apiFetch } from '../account/api';
 import { managedReady } from '../account/credentials';
@@ -47,7 +46,6 @@ export interface AppFile {
   mediaType: string;
 }
 
-const CATALOG = CONNECT_APPS.map((app) => app.slug);
 const TOOLKITS_PAGE = 50;
 const RESULT_LIMIT = 8000;
 
@@ -69,7 +67,8 @@ export function appsBackend(): AppsBackend | null {
 function sdkBackend(key: string): AppsBackend {
   const client = new Composio({ apiKey: key });
   let session: Promise<Awaited<ReturnType<Composio['create']>>> | null = null;
-  const current = () => (session ??= client.create(composioUserId(), { toolkits: CATALOG }));
+  // Unpinned, like the API's session: every toolkit the user links is in reach.
+  const current = () => (session ??= client.create(composioUserId()));
   const reset = (): void => {
     session = null;
   };

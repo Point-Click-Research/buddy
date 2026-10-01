@@ -6,6 +6,7 @@
 // none of these tools exist.
 
 import type { Tool } from '@anthropic-ai/sdk/resources/messages';
+import { app } from 'electron';
 import { Dirent } from 'fs';
 import { mkdir, readdir, readFile, realpath, stat, writeFile } from 'fs/promises';
 import { homedir } from 'os';
@@ -18,6 +19,7 @@ import { getSettings } from '../settings';
 import { detectWorkspaceRoot } from './detect';
 import { showDiffInEditor } from './diff-view';
 import { applyEdit, resolveInWorkspace, secretName, SKIP_DIRS, writeDenied } from './workspace';
+import { namesFenced } from '../vault-fence';
 import { errorMessage } from '../../shared/errors';
 
 const log = createLogger('code-tools');
@@ -156,6 +158,9 @@ async function guard(
   if ('error' in resolved) return resolved;
   if (secretName(resolved.path.split(sep).pop()!)) {
     return { error: 'That file looks like it holds secrets, which the coding tools never touch.' };
+  }
+  if (namesFenced(resolved.path, [app.getPath('userData')])) {
+    return { error: "That path is inside Buddy's own data folder, which holds encrypted secrets; the coding tools never touch it." };
   }
   if (forWrite) {
     const denied = writeDenied(resolved.rel);

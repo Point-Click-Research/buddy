@@ -53,6 +53,18 @@ export interface TreeElement {
   depth: number;
   /** The AX actions the element answers to, e.g. AXPress. Empty if unsaid. */
   actions: readonly string[];
+  /**
+   * The web origin of the frame this element lives in, as the browser
+   * process reports it (never as the frame describes itself). Set only by
+   * Buddy's browser; the card fill refuses a field without one.
+   */
+  origin?: string;
+  /**
+   * The origins of every frame above this element's frame, innermost first,
+   * from the same browser-process frame tree. A processor's card frame placed
+   * by an ad frame has the ad's origin here, and the card fill refuses it.
+   */
+  ancestors?: readonly string[];
 }
 
 /** Pressing anything else fails in the driver with an unsupported action. */

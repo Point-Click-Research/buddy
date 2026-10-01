@@ -5,6 +5,14 @@
 // a domain named in the approved plan text, or the standing trusted list in
 // settings. This is the defense against an injected page steering the model
 // onto an attacker's form, so every check fails closed.
+//
+// The URL says whose page it is, not whose iframe. Card fields often live in
+// frames, and a frame on a merchant's page is not necessarily the merchant:
+// a processor's hosted fields are the legitimate case, an ad or chat embed
+// with an input labelled "Card number" the hostile one. So each field's
+// frame is gated too, by the origin the browser process reports for it, and
+// so is every frame above it (fill-tool.ts walks the chain): a processor's
+// real card frame placed by an ad frame is the ad's to read.
 
 import { registrableDomain } from '../../shared/link-text';
 import { runJxa } from '../apple/jxa';
@@ -81,6 +89,39 @@ export function allowFill(url: string): { ok: true; host: string } | { ok: false
       'not a page Buddy opened, and not on the trusted list. Use ask_user to confirm this is the right ' +
       'store before anything else; if they confirm, ask them to say the store name so it can be approved.',
   };
+}
+
+/**
+ * Payment processors whose hosted card fields merchants embed as iframes, by
+ * registrable domain. Kept short on purpose: a field in a frame from any
+ * other host is refused with that host in the reason, so a processor missing
+ * here shows up as a named refusal, never as a fill into an unknown frame.
+ */
+const PROCESSOR_DOMAINS = new Set([
+  'stripe.com', // Stripe Elements
+  'shopifycs.com', // Shopify Payments
+  'adyen.com', // Adyen secured fields
+  'braintreegateway.com', // Braintree hosted fields
+  'paypal.com', // PayPal card fields
+  'checkout.com', // Checkout.com Frames
+]);
+
+/**
+ * May a card field in a frame of this origin take the card? Only a frame of
+ * the merchant's own site (`merchant` is the registrable domain allowFill
+ * passed) or a processor's hosted fields. An opaque origin ("null"), no
+ * origin at all (a desktop driver's row), and plain HTTP all fail closed.
+ */
+export function allowFrame(origin: string | undefined, merchant: string): boolean {
+  let parsed: URL;
+  try {
+    parsed = new URL(origin ?? '');
+  } catch {
+    return false;
+  }
+  if (parsed.protocol !== 'https:') return false;
+  const domain = registrableDomain(parsed.hostname);
+  return domain === merchant || PROCESSOR_DOMAINS.has(domain);
 }
 
 // --- Reading the real tab URL --------------------------------------------------

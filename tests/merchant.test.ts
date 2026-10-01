@@ -23,6 +23,7 @@ vi.mock('../src/main/log', () => ({
 import { registrableDomain } from '../src/shared/link-text';
 import {
   allowFill,
+  allowFrame,
   clearNotedMerchants,
   hostsInText,
   noteMerchantUrl,
@@ -92,6 +93,28 @@ describe('allowFill', () => {
     noteMerchantUrl('https://amazon.com/dp/B01');
     clearNotedMerchants();
     expect(allowFill('https://amazon.com/pay')).toMatchObject({ ok: false });
+  });
+});
+
+// The tab URL says whose page it is, not whose iframe. A field is filled only
+// in a frame of the merchant's own site or a processor's hosted card fields.
+describe('allowFrame', () => {
+  it("allows the merchant's own frames and a processor's hosted fields", () => {
+    expect(allowFrame('https://www.zappos.com', 'zappos.com')).toBe(true);
+    expect(allowFrame('https://checkout.zappos.com', 'zappos.com')).toBe(true);
+    expect(allowFrame('https://js.stripe.com', 'zappos.com')).toBe(true);
+    expect(allowFrame('https://checkout.shopifycs.com', 'shop.example')).toBe(true);
+  });
+
+  it('refuses any other frame on an approved page, and anything without a real origin', () => {
+    // An ad, a chat widget, or a review embed with an input labelled "Card number".
+    expect(allowFrame('https://ads.example', 'zappos.com')).toBe(false);
+    // A lookalike under someone else's domain is not the processor.
+    expect(allowFrame('https://js.stripe.com.evil.example', 'zappos.com')).toBe(false);
+    expect(allowFrame('http://www.zappos.com', 'zappos.com')).toBe(false);
+    // A sandboxed frame has an opaque origin; a desktop driver's row has none.
+    expect(allowFrame('null', 'zappos.com')).toBe(false);
+    expect(allowFrame(undefined, 'zappos.com')).toBe(false);
   });
 });
 

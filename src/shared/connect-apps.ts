@@ -266,8 +266,23 @@ export const CONNECT_APPS: ConnectApp[] = [
   },
 ];
 
+/**
+ * The featured entry for a slug, or a bare one for a toolkit linked by slug
+ * alone: the catalog is what Apps shows first, not what may be connected.
+ */
+export function connectAppFor(slug: string): ConnectApp {
+  return (
+    CONNECT_APPS.find((app) => app.slug === slug) ?? {
+      slug,
+      label: slug,
+      host: slug,
+      blurb: "Connected by slug.",
+    }
+  );
+}
+
 export function connectAppLabel(slug: string): string {
-  return CONNECT_APPS.find((app) => app.slug === slug)?.label ?? slug;
+  return connectAppFor(slug).label;
 }
 
 /**

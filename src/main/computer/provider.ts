@@ -165,14 +165,6 @@ export interface ComputerProvider {
    */
   resolveElements(observationId: unknown): ResolvedObservation | null;
   /**
-   * A real pointer click at a global screen DIP point, to give a field
-   * genuine focus before it is filled. Hosted card fields take a paste only
-   * after that; the driver's own element-targeted typing never truly
-   * focuses them. Optional: a provider without it fills without focusing.
-   * Returns the refusal, or null when the click went out.
-   */
-  focusAt?(point: Point2D): Promise<ComputerError | null>;
-  /**
    * Where this action will happen on screen, so the HUD can fly the buddy
    * there before anything moves. Null when the action has
    * no place — typing goes wherever focus already is.

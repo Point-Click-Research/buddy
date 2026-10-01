@@ -1,7 +1,6 @@
 // What the signed-in plan holds back. Pasted keys are never gated: they run
 // on every plan and in a build with no account service.
-
-import { accountConfigured } from './config';
+import { accountConfigured } from "./config";
 
 let plan: string | null = null;
 let readPlan: (() => string | null) | null = null;
@@ -25,8 +24,8 @@ export function bindPlanReader(read: () => string | null): void {
 export function talkOnly(): boolean {
   if (!accountConfigured()) return false;
   try {
-    return (readPlan ? readPlan() : plan) === 'waitlist';
+    return (readPlan ? readPlan() : plan) === "waitlist";
   } catch {
-    return plan === 'waitlist';
+    return plan === "waitlist";
   }
 }

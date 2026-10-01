@@ -3,6 +3,8 @@
 // card and a stricter confirmation. This is a backstop against reflexive
 // approval, not a sandbox — the card and the user's judgement stay the gate.
 
+import { namesFenced } from './vault-fence';
+
 export type CommandDanger =
   | { level: 'blocked'; reason: string }
   | { level: 'risky' }
@@ -34,6 +36,12 @@ const BLOCKED: Array<{ pattern: RegExp; reason: string }> = [
     pattern: /:\s*\(\)\s*\{[^}]*\|[^}]*&[^}]*\}/,
     reason: 'it is a fork bomb',
   },
+  {
+    // The Keychain holds the key that decrypts the saved card and API keys.
+    // No approval makes reading it a good idea; a steered model would ask.
+    pattern: /(^|[;&|(`\s])(\/usr\/bin\/)?security\s+(find-(generic|internet)-password|dump-keychain|export)\b/,
+    reason: 'it reads the Keychain, which holds the keys to the saved card and API keys',
+  },
 ];
 
 /**
@@ -45,9 +53,17 @@ const BLOCKED: Array<{ pattern: RegExp; reason: string }> = [
 const RISKY =
   /(^|[;&|(]\s*)(rm|rmdir|srm)\s|\|\s*(ba|z|da)?sh\b|\bchmod\s+-\w*R\b|\bchown\s+-\w*R\b|(^|[;&|(]\s*)(kill|killall|pkill)\b|\bgit\s+(reset\s+--hard|clean\s+-\w*f|push\b[^;&|]*--force)/;
 
-export function classifyCommand(command: string): CommandDanger {
+/**
+ * `fenced` is Buddy's own data folder in every spelling a command might use
+ * (see vault-fence.ts): a command that names it is blocked like a Keychain
+ * read, since the encrypted card and keys live there.
+ */
+export function classifyCommand(command: string, fenced: readonly string[] = []): CommandDanger {
   for (const { pattern, reason } of BLOCKED) {
     if (pattern.test(command)) return { level: 'blocked', reason };
+  }
+  if (namesFenced(command, fenced)) {
+    return { level: 'blocked', reason: "it reads Buddy's own data folder, where the encrypted card and keys are kept" };
   }
   return RISKY.test(command) ? { level: 'risky' } : { level: 'normal' };
 }

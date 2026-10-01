@@ -1,9 +1,9 @@
 import { useEffect, useMemo, useState, type ReactElement } from 'react';
-import { CONNECT_APPS } from '../../../shared/connect-apps';
+import { CONNECT_APPS, connectAppFor } from '../../../shared/connect-apps';
 import type { AppConnection } from '../../../shared/types';
 import { buddy } from '../../buddy';
 import { useAccount } from '../../shared/account-data';
-import { Button, Note, SectionHeader, SiteIcon, Skeleton, Table, TableRow } from '../../ui';
+import { Button, Note, SectionHeader, SiteIcon, Skeleton, Table, TableRow, TextInput } from '../../ui';
 import { useSettings } from '../context';
 import { errorMessage } from '../../../shared/errors';
 
@@ -15,6 +15,7 @@ export function ConnectAppsPage({ heading = true }: { heading?: boolean }): Reac
   const [connections, setConnections] = useState<AppConnection[] | null>(lastConnections);
   const [busy, setBusy] = useState('');
   const [notice, setNotice] = useState('');
+  const [other, setOther] = useState('');
   const account = useAccount();
   const signedIn = account?.signedIn ?? false;
   const canConnect = view.appKeys.composio || signedIn;
@@ -53,9 +54,22 @@ export function ConnectAppsPage({ heading = true }: { heading?: boolean }): Reac
 
   const shown = useMemo(() => {
     const linked = new Set((connections ?? []).map((entry) => entry.slug));
+    // A toolkit linked by slug that the catalog doesn't feature still gets a row.
+    const featured = new Set(CONNECT_APPS.map((app) => app.slug));
+    const extra = [...linked].filter((slug) => !featured.has(slug)).map(connectAppFor);
     // Stable sort: connected first, catalog order within each group.
-    return CONNECT_APPS.toSorted((a, b) => Number(linked.has(b.slug)) - Number(linked.has(a.slug)));
+    return [...CONNECT_APPS, ...extra].toSorted((a, b) => Number(linked.has(b.slug)) - Number(linked.has(a.slug)));
   }, [connections]);
+
+  const otherSlug = other.trim().toLowerCase();
+  const connectOther = (): void => {
+    if (!otherSlug) return;
+    act(otherSlug, async () => {
+      const result = await buddy.connectApp(otherSlug);
+      if (result.ok) setOther('');
+      return result;
+    });
+  };
 
   return (
     <>
@@ -117,6 +131,18 @@ export function ConnectAppsPage({ heading = true }: { heading?: boolean }): Reac
           );
         })}
       </Table>
+      <div className="pt-6">
+        <TextInput
+          label="Connect another"
+          subtitle="Any Composio toolkit by its slug, as composio.dev spells it."
+          placeholder="google_calendar"
+          value={other}
+          disabled={!canConnect}
+          onChange={(event) => setOther(event.target.value)}
+          onKeyDown={(event) => event.key === 'Enter' && connectOther()}
+          action={{ label: otherSlug && busy === otherSlug ? '…' : 'Connect', onClick: connectOther }}
+        />
+      </div>
       {notice ? <Note>{notice}</Note> : null}
     </>
   );

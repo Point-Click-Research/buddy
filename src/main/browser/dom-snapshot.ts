@@ -35,6 +35,10 @@ export interface FrameSnapshot {
 /** One frame's snapshot plus the offset of that frame inside the page. */
 export interface PlacedFrame {
   frame: number;
+  /** The frame's origin from the browser process (WebFrameMain.origin), not from its own script. */
+  origin: string;
+  /** The origins of the frames above it, innermost first, from WebFrameMain.parent. Empty for the main frame. */
+  ancestors: readonly string[];
   snapshot: FrameSnapshot;
   /** Where the frame's (0,0) sits in main-frame viewport px; null when unknown. */
   offset: { x: number; y: number } | null;
@@ -277,6 +281,8 @@ export function toTreeElements(frames: readonly PlacedFrame[]): TreeElement[] {
     textBounds: null,
     depth: 0,
     actions: [],
+    origin: main.origin,
+    ancestors: main.ancestors,
   });
   for (const placed of frames) {
     const depth = placed.frame === 0 ? 1 : 2;
@@ -297,6 +303,8 @@ export function toTreeElements(frames: readonly PlacedFrame[]): TreeElement[] {
         textBounds: null,
         depth,
         actions: [],
+        origin: placed.origin,
+        ancestors: placed.ancestors,
       });
     }
   }

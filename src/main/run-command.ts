@@ -6,9 +6,11 @@
 
 import type { Tool } from '@anthropic-ai/sdk/resources/messages';
 import { spawn } from 'child_process';
+import { app } from 'electron';
 import { homedir } from 'os';
 import { type ToolOutcome, type ToolRegistry, toolArgs } from './ai/tools';
 import { classifyCommand } from './command-danger';
+import { spellings } from './vault-fence';
 import { createLogger } from './log';
 import { requestConfirmation } from './mcp/confirm';
 import { truncateForModel } from './reader/truncate';
@@ -70,8 +72,9 @@ async function runCommand(input: unknown, signal: AbortSignal): Promise<ToolOutc
 
   // Catastrophic commands never reach a card: the user reflex-approves cards
   // they don't fully read, and no cleanup needs to wipe a disk or a home
-  // folder. The model is told why, so it can say so and offer another way.
-  const danger = classifyCommand(command);
+  // folder, and nothing reads the Keychain or Buddy's own data folder. The
+  // model is told why, so it can say so and offer another way.
+  const danger = classifyCommand(command, spellings(app.getPath('userData'), homedir()));
   if (danger.level === 'blocked') {
     log.warn(`run_command refused (${danger.reason}): ${command}`);
     return {

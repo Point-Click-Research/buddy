@@ -18,7 +18,7 @@ import {
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
-import { CONNECT_APPS } from '../../../shared/connect-apps';
+import { connectAppFor } from '../../../shared/connect-apps';
 import { chordLabel } from '../../../shared/hotkeys';
 import { hasBlanks, refToken } from '../../../shared/instructions';
 import { registrableDomain } from '../../../shared/link-text';
@@ -483,10 +483,9 @@ function useRefOptions(): RefOption[] {
       setSignedIn(hosts);
       setRemote([
         ...(apps ?? []).flatMap((connection): RefOption[] => {
-          const app = CONNECT_APPS.find((entry) => entry.slug === connection.slug);
-          return connection.status === 'active' && app
-            ? [{ source: 'app', id: app.slug, label: app.label, host: app.host, description: app.blurb }]
-            : [];
+          if (connection.status !== 'active') return [];
+          const app = connectAppFor(connection.slug);
+          return [{ source: 'app', id: app.slug, label: app.label, host: app.host, description: app.blurb }];
         }),
         ...servers
           .filter((server) => server.enabled && server.status === 'connected')
