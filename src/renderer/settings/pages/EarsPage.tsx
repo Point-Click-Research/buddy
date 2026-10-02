@@ -47,7 +47,7 @@ export function EarsPage(): ReactElement {
 }
 
 /** The local ear: one row, one download button. A first ask downloads it too. */
-export function LocalWhisper(): ReactElement {
+function LocalWhisper(): ReactElement {
   const [ready, setReady] = useState<boolean | null>(null);
   const [downloading, setDownloading] = useState(false);
   const [percent, setPercent] = useState(0);

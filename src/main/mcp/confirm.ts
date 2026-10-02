@@ -37,10 +37,6 @@ export function isConfirmationStrict(): boolean {
   return pending !== null && pendingStrict;
 }
 
-export function isPlanConfirmationPending(): boolean {
-  return pending !== null && pendingKind === 'plan';
-}
-
 export function setSessionPlan(plan: PlanTask | null): void {
   sessionPlan = plan;
 }
@@ -215,11 +211,9 @@ function askOnce(card: ConfirmCard, signal: AbortSignal, strict: boolean): Promi
   });
 }
 
-export function normalizePlanDraft(draft: ConfirmPlanDraft): ConfirmPlanDraft {
+function normalizePlanDraft(draft: ConfirmPlanDraft): ConfirmPlanDraft {
   return {
     description: draft.description.trim(),
     ...(draft.mode === 'watch' || draft.mode === 'browser' ? { mode: draft.mode } : {}),
   };
 }
-
-export { descriptionToTask as planDescriptionToTask, taskToDescription } from './plan-text';

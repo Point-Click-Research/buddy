@@ -10,7 +10,7 @@ import { requestConfirmation } from '../mcp/confirm';
 import { readBudget } from '../ai/budget-message';
 import { setOnDemand } from './api';
 
-export const ON_DEMAND_CARD: ConfirmCard = {
+const ON_DEMAND_CARD: ConfirmCard = {
   title: "Keep going past this month's included usage?",
   detail:
     'Extra usage is billed at the end of the month at model cost, on your Buddy invoice. You can turn it off any time under Settings → Account.',

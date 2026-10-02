@@ -20,7 +20,7 @@ export function TextInput({
   info?: ReactNode;
   /** Shown in red directly under the input (not under the label). */
   error?: ReactNode;
-  action?: { label: string; onClick: () => void; variant?: 'primary' | 'secondary' };
+  action?: { label: string; onClick: () => void; variant?: 'primary' | 'secondary'; disabled?: boolean };
   /** Sits inside the input at its right edge (a brand mark, a unit). */
   adornment?: ReactNode;
   /** Right-padding class when the adornment is wider than one mark. */
@@ -50,7 +50,7 @@ export function TextInput({
     <div className="flex items-center gap-2">
       {input}
       {/* The input's height, so the pair reads as one control. */}
-      <Button variant={action.variant} className="h-9" onClick={action.onClick}>
+      <Button variant={action.variant} className="h-9" disabled={action.disabled} onClick={action.onClick}>
         {action.label}
       </Button>
     </div>

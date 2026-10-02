@@ -4,6 +4,7 @@
 
 import { BrowserWindow, clipboard, screen } from 'electron';
 import { join } from 'path';
+import { setTimeout as pause } from 'timers/promises';
 import { createLogger } from '../log';
 import { getPermissions, requestPermission } from '../permissions';
 import { flyBuddyTo } from '../windows';
@@ -85,7 +86,7 @@ export async function runInputTest(): Promise<void> {
   }
 
   const win = openDriverForm();
-  await new Promise((resolve) => setTimeout(resolve, 800)); // let it render/settle
+  await pause(800); // let it render/settle
 
   const content = win.getContentBounds();
   const at = (target: { x: number; y: number }) => ({
@@ -171,8 +172,4 @@ async function guard(step: string): Promise<boolean> {
     return false;
   }
   return true;
-}
-
-function pause(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

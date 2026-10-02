@@ -5,6 +5,7 @@
 // already validated. Pure module, fully unit-testable.
 
 import type { Point } from '../../shared/drawing';
+import { round } from '../../shared/pen';
 import type { Rect } from '../coords';
 
 /** How far short of an element's edge an arrowhead stops, in DIP. */
@@ -134,9 +135,4 @@ export function leaderPath(from: Point, to: Point): string {
     `M ${round(from.x)} ${round(from.y)} ` +
     `Q ${round(midX)} ${round(from.y)} ${round(to.x)} ${round(to.y)}`
   );
-}
-
-/** Two decimals is well under a pixel and keeps the path strings short. */
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

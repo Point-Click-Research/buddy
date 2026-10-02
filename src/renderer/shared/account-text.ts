@@ -42,12 +42,12 @@ export function poolLine(usage: Usage): string {
   return `${dollars(usage.spentCents)} of ${dollars(usage.budgetCents)}`;
 }
 
-export function dollars(cents: number): string {
+function dollars(cents: number): string {
   return (cents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' });
 }
 
 /** "October 1", or '' when the date is unknown. */
-export function resetsOn(iso: string | null): string {
+function resetsOn(iso: string | null): string {
   const date = iso ? new Date(iso) : null;
   return date && !Number.isNaN(date.getTime()) ? date.toLocaleDateString('en-US', { month: 'long', day: 'numeric' }) : '';
 }

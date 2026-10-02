@@ -3,7 +3,7 @@
 
 import { moneyLabel, productLine as line } from '../product-line';
 
-export interface CatalogMoney {
+interface CatalogMoney {
   amount: number;
   currency: string;
 }

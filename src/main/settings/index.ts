@@ -22,7 +22,6 @@ import {
 import { emptyShopper } from './defaults';
 import { getSettings, updateSettings } from './store';
 
-export { DEFAULT_SETTINGS } from './defaults';
 export {
   clearApiKey,
   clearKeyWarning,
@@ -33,7 +32,7 @@ export {
   setApiKey,
   setAppSecret,
 } from './secrets';
-export { getSettings, updateSettings, type AppSecretName } from './store';
+export { getSettings, updateSettings } from './store';
 
 /** The skills the model may see and load; disabled ones stay out entirely. */
 export function enabledSkills(): WritingSkill[] {

@@ -10,7 +10,7 @@ import { getSettings, store as settingsStore, updateSettings } from '../settings
 import { decideLegacyPersonal, type LegacyPersonalDecision } from './personal-split';
 import { legacyBelongsToAccount } from './scope';
 
-export interface PersonalSlice {
+interface PersonalSlice {
   shoppers: Settings['shoppers'];
   buddyShipping: Settings['buddyShipping'];
   buddyBilling: Settings['buddyBilling'];

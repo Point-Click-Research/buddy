@@ -56,10 +56,10 @@ const useDrawingCount = createBuddyStore(
   },
 );
 
-/** Shown while the walk is unfinished and someone is signed in (or this build has no account). */
+/** Shown while the walk is unfinished and someone is signed in. A build with no account skips it (SignInScene's Launch). */
 export function Onboarding(): ReactElement | null {
   const account = useAccount();
-  if (!account || (account.configured && !account.signedIn)) return null;
+  if (!account?.signedIn) return null;
   return (
     <SettingsProvider>
       <Walk account={account} />
@@ -134,7 +134,7 @@ function Walk({ account }: { account: AccountView }): ReactElement | null {
   const saveName = (): void => {
     const shoppers: ShopperProfile[] = [{ ...settings.shoppers[0]!, name: firstName.trim() || 'Me' }, ...settings.shoppers.slice(1)];
     void patch({ shoppers });
-    if (account.configured) void buddy.setAccountName(firstName, lastName);
+    void buddy.setAccountName(firstName, lastName);
   };
 
   const steps: Step[] = [

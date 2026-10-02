@@ -11,7 +11,6 @@ export function useStageClock(leaveAfter?: number): RefObject<StageClock> {
     home: { x: 0, y: 0 },
     center: { x: 0, y: 0 },
     geo: stageGeometry(DEFAULT_RADIUS, 1280, 800),
-    follow: { at: null, pointer: { x: 0, y: 0 }, trail: { x: 0, y: 0 } },
     exit: leaveAfter === undefined ? null : LAND + leaveAfter,
   });
 }

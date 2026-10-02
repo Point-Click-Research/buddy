@@ -2,7 +2,9 @@
 
 import type { ReactElement } from 'react';
 import { BLAND_VOICES, DEFAULT_CALL_STYLE } from '../../../shared/types';
-import { Card, LinkButton, MenuSelect, SectionHeader, Textarea, TextInput } from '../../ui';
+import { useAccount } from '../../shared/account-data';
+import { buddy } from '../../buddy';
+import { Card, LinkButton, MenuSelect, Note, SectionHeader, Textarea, TextInput } from '../../ui';
 import { useSettings } from '../context';
 
 const BLAND_CUSTOM = '__custom__';
@@ -14,13 +16,20 @@ function blandPreset(voice: string): string {
 export function PhonePage(): ReactElement {
   const { view, patch } = useSettings();
   const { settings } = view;
+  const own = useAccount()?.configured === false;
 
   return (
     <>
       <SectionHeader
         title="Voice and style"
-        description="For outbound calls Buddy places. Included with your account."
+        description={`For outbound calls Buddy places.${own ? '' : ' Included with your account.'}`}
       />
+      {own && (
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <Note tone="warn">This build has no account, so calls need your own Bland key.</Note>
+          <LinkButton onClick={() => buddy.openSettingsWindow('mcp')}>Add Bland</LinkButton>
+        </div>
+      )}
       <Card>
         <MenuSelect
           label="Phone call voice"

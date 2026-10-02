@@ -105,7 +105,7 @@ export function formatWindows(windows: readonly WindowRecord[], frontPid?: numbe
   const lines = usable.map(
     (window) =>
       `pid ${window.pid} window_id ${window.windowId} | ${window.app} | ${window.title || '(untitled)'} | ` +
-      `${round(window.bounds.x)},${round(window.bounds.y)} ${round(window.bounds.width)}x${round(window.bounds.height)}` +
+      `${Math.round(window.bounds.x)},${Math.round(window.bounds.y)} ${Math.round(window.bounds.width)}x${Math.round(window.bounds.height)}` +
       (window === front ? ' | frontmost' : window.onScreen ? '' : ' | offscreen'),
   );
   return `Windows:\n${lines.join('\n')}`;
@@ -163,8 +163,4 @@ function numberOf(value: unknown): number {
 
 function stringOf(value: unknown): string {
   return typeof value === 'string' ? value.replace(/\s+/g, ' ').trim() : '';
-}
-
-function round(value: number): number {
-  return Math.round(value);
 }

@@ -124,7 +124,7 @@ export function stopDriving(): void {
   setDrivingHud(null);
 }
 
-export function isDriving(): boolean {
+function isDriving(): boolean {
   return session !== null && session.stopped === null;
 }
 

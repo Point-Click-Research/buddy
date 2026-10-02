@@ -23,7 +23,7 @@ export type ActionFamily =
   /** Navigation inside Buddy's own browser. */
   | 'browser';
 
-export type ProviderId = 'cua' | 'basic' | 'browser';
+type ProviderId = 'cua' | 'basic' | 'browser';
 
 export interface ComputerDescriptor {
   id: ProviderId;

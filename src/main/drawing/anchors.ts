@@ -13,7 +13,7 @@ import { ANCHOR_POINTS, type AnchorPoint, type Point } from '../../shared/drawin
 import { clamp, dipToOverlayLocal, pixelToDip, type Rect } from '../coords';
 
 /** A screenshot the model may have measured in. */
-export interface FrameInfo {
+interface FrameInfo {
   displayId: number;
   imageWidth: number;
   imageHeight: number;
@@ -259,7 +259,7 @@ function onBox(box: ElementBox, anchor: Record<string, unknown>): AnchorResult {
 }
 
 /** Which point of a box a side name refers to. */
-export function pointOn(rect: Rect, at: AnchorPoint): Point {
+function pointOn(rect: Rect, at: AnchorPoint): Point {
   const left = rect.x;
   const right = rect.x + rect.width;
   const top = rect.y;

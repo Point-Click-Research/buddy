@@ -1,22 +1,26 @@
 // The landing shot in the middle of the window: the spiral, the burst, then
 // the sphere scales away and the sign-in fades up where it was. Mounted only
-// while the sign-in gate is up.
+// while the sign-in gate is up. With no account service there is nothing to
+// sign in to: Launch skips the walk and starts the tour.
 
 import { useReducedMotion } from 'motion/react';
 import { useEffect, useRef, useState, type ReactElement } from 'react';
 import modelUrl from '../stage/buddy-dot.glb?url';
-import { HOLD, Shot, useStageClock } from '../stage';
+import { useStageClock } from '../stage/clock';
+import { Shot } from '../stage/Shot';
+import { HOLD } from '../stage/timeline';
+import { buddy } from '../buddy';
 import { useSettingsView } from '../home/settings-data';
 import humUrl from '../recorder/sounds/sign-in-hum.mp3';
 import finishedUrl from '../recorder/sounds/task-finished.mp3';
-import { cn } from '../ui';
+import { Button, cn } from '../ui';
 import { SignInForm } from './SignInForm';
 
 const humSound = new Audio(humUrl);
 /** The library's bloom. It starts the frame the shockwave appears. */
 const burstSound = new Audio(finishedUrl);
 
-export function SignInScene(): ReactElement {
+export function SignInScene({ launch }: { launch: boolean }): ReactElement {
   const reduced = useReducedMotion() ?? false;
   const clock = useStageClock(HOLD);
   const markRef = useRef<HTMLDivElement>(null);
@@ -66,8 +70,14 @@ export function SignInScene(): ReactElement {
         )}
         inert={!ready}
       >
-        <h1 className="m-0 text-[25px] font-medium">Sign in to Buddy</h1>
-        <SignInForm fill />
+        <h1 className="m-0 text-[25px] font-medium">{launch ? 'Meet Buddy' : 'Sign in to Buddy'}</h1>
+        {launch ? (
+          <Button className="w-full" onClick={() => void buddy.updateSettings({ onboardingDone: true })}>
+            Launch Buddy
+          </Button>
+        ) : (
+          <SignInForm fill />
+        )}
       </div>
     </div>
   );

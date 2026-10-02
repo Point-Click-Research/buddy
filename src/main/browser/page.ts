@@ -6,6 +6,7 @@
 // ignore value writes and drop untrusted keystrokes actually listen for.
 
 import { createHash } from 'crypto';
+import { setTimeout as sleep } from 'timers/promises';
 import type { WebContents, WebFrameMain } from 'electron';
 import type { KeyCombo } from '../computer/keys';
 import type { Bounds, TreeElement } from '../computer/tree';
@@ -323,7 +324,7 @@ const SPECIAL_KEYS: Record<string, { key: string; code: string; vk: number; text
 const EDIT_COMMANDS: Record<string, string> = { a: 'selectAll', c: 'copy', x: 'cut', v: 'paste', z: 'undo' };
 
 /** The fields of one CDP key event for a combo (shared by its down and up). */
-export function keyEvent(combo: KeyCombo): {
+function keyEvent(combo: KeyCombo): {
   key: string;
   code: string;
   windowsVirtualKeyCode: number;
@@ -366,8 +367,4 @@ function ancestorOrigins(frame: WebFrameMain): string[] {
   const origins: string[] = [];
   for (let above = frame.parent; above; above = above.parent) origins.push(above.origin);
   return origins;
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

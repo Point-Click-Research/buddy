@@ -147,7 +147,7 @@ export function lastNotedMerchantUrl(): string | null {
  * matches when given, otherwise the frontmost window. Null when the app is
  * not a scriptable browser or nothing matches: the caller fails closed.
  */
-export async function activeTabUrl(appName: string, windowTitle = ''): Promise<string | null> {
+async function activeTabUrl(appName: string, windowTitle = ''): Promise<string | null> {
   const browser = BROWSERS.find((name) => name.toLowerCase() === appName.trim().toLowerCase());
   if (!browser) return null;
   const source = `(() => {

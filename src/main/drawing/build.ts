@@ -9,7 +9,7 @@ import { isError, resolveAnchor, sameDisplay, type AnchorWorld } from './anchors
 import { padded } from './geometry';
 import { number } from './read';
 
-export interface Built {
+interface Built {
   displayId: number;
   geometry: Geometry;
   /** Where this shape's label wants to sit. */
@@ -23,7 +23,7 @@ export interface Built {
   points: number;
 }
 
-export type BuildResult = Built | { error: string };
+type BuildResult = Built | { error: string };
 
 export interface BuildContext {
   world: AnchorWorld;
@@ -34,7 +34,7 @@ export interface BuildContext {
 export type ShapeBuilder = (shape: Record<string, unknown>, context: BuildContext) => BuildResult;
 
 /** Default padding when a shape is drawn `around` something. */
-export const DEFAULT_PADDING = 8;
+const DEFAULT_PADDING = 8;
 
 export function displayOf(context: BuildContext, displayId: number): Rect {
   return context.displays.get(displayId) ?? { x: 0, y: 0, width: 0, height: 0 };
@@ -53,7 +53,7 @@ export function displayOf(context: BuildContext, displayId: number): Rect {
  * model measured in. `width` is the stroke thickness on every shape, so a
  * box's size is named radius / rx / ry.
  */
-export const BOX_FORMS =
+const BOX_FORMS =
   'needs one of: around (an element or a mark), from and to as opposite corners, ' +
   'or at plus radius (or rx and ry) measured in the same screenshot';
 

@@ -48,9 +48,9 @@ const BUILDERS: Record<string, ShapeBuilder> = {
   ...CHART_BUILDERS,
 };
 
-export const SHAPE_NAMES = Object.keys(BUILDERS).sort();
+const SHAPE_NAMES = Object.keys(BUILDERS).sort();
 
-export interface ValidatedShape extends StoredShape {
+interface ValidatedShape extends StoredShape {
   displayId: number;
 }
 

@@ -90,7 +90,7 @@ export interface WindowTree {
 }
 
 /** How many lines one tool result may carry; the rest need expand_element. */
-export const MAX_ROWS = 300;
+const MAX_ROWS = 300;
 
 /**
  * Trees larger than this are rendered as a depth-limited overview instead of
@@ -99,7 +99,7 @@ export const MAX_ROWS = 300;
  * on each truncated branch costs a fraction of that, and expand_element
  * reveals any branch on demand — the full rows are already recorded.
  */
-export const SKELETON_THRESHOLD = 100;
+const SKELETON_THRESHOLD = 100;
 
 /** How many levels an overview shows, counted from its shallowest row. */
 const SKELETON_DEPTH = 3;

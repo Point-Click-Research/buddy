@@ -40,7 +40,7 @@ export const ATTACHMENT_LIMITS = {
 } as const;
 
 /** The file types the picker offers and a paste or drop accepts. Chromium cannot decode HEIC, so iPhone photos need the JPEG the share sheet makes. */
-export const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
+const IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'] as const;
 export const ACCEPTED_TYPES = [...IMAGE_TYPES, 'application/pdf'].join(',');
 
 /** The kind a file's type maps to, or null when Buddy cannot send it. */

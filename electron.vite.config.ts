@@ -13,11 +13,18 @@ export default defineConfig({
       externalizeDeps: {
         exclude: ['electron-store', 'unpdf', '@composio/core', 'points-on-path'],
       },
+      rollupOptions: {
+        // jev.ts and locate-object.ts import Electron-backed modules lazily so
+        // tests can load them without Electron; the bundle needs no split.
+        onwarn(warning, warn) {
+          if (!warning.message.includes('dynamic import will not move module into another chunk')) warn(warning);
+        },
+      },
     },
   },
   preload: {},
   renderer: {
-    // Vite otherwise tries to parse the cardboard box as JavaScript.
+    // Vite otherwise tries to parse the sphere model as JavaScript.
     assetsInclude: ['**/*.glb'],
     plugins: [react(), tailwindcss()],
     build: {

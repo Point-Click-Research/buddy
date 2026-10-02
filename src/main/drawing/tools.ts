@@ -53,7 +53,7 @@ export function hasDrawings(): boolean {
 }
 
 /** Everything on screen goes when a new request starts. */
-export function resetDrawings(): void {
+function resetDrawings(): void {
   // Which displays to clear has to be read before the store forgets them.
   const displays = store.displays();
   store.clear();

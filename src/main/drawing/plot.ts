@@ -56,7 +56,7 @@ const ALLOWED = new Set([
 ]);
 
 /** A run of joined-up samples; a break starts a new one. */
-export type Segment = Point[];
+type Segment = Point[];
 
 export type PlotResult = { segments: Segment[] } | { error: string };
 

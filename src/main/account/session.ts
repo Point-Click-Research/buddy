@@ -6,7 +6,8 @@
 import { shell } from 'electron';
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { createLogger } from '../log';
-import { getAppSecret, setAppSecret } from '../settings';
+import { getAppSecret, getSettings, setAppSecret, updateSettings } from '../settings';
+import { broadcastSettings } from '../settings-view';
 import { bindLocalAccount } from './local';
 import { setKnownPlan } from './plan-gate';
 import { errorMessage } from '../../shared/errors';
@@ -39,20 +40,38 @@ export function identity(): string {
 
 /**
  * The name they gave on the Account page, else the one Google shared at
- * sign-in split at the first space; '' parts when neither is known.
+ * sign-in split at the first space; '' parts when neither is known. With no
+ * account service it is the user's own profile in Memory, kept on this Mac.
  */
 export function accountName(): { firstName: string; lastName: string } {
+  if (!accountConfigured()) return splitName(localName());
   const meta = current?.user.user_metadata ?? {};
   const text = (value: unknown): string => (typeof value === 'string' ? value.trim() : '');
   if (text(meta.first_name) || text(meta.last_name)) {
     return { firstName: text(meta.first_name), lastName: text(meta.last_name) };
   }
-  const [firstName = '', ...rest] = text(meta.full_name ?? meta.name).split(/\s+/);
+  return splitName(text(meta.full_name ?? meta.name));
+}
+
+function splitName(name: string): { firstName: string; lastName: string } {
+  const [firstName = '', ...rest] = name.split(/\s+/);
   return { firstName, lastName: rest.join(' ') };
+}
+
+/** 'Me' is the profile's placeholder until they give a name. */
+function localName(): string {
+  const name = getSettings().shoppers[0]?.name.trim() ?? '';
+  return name === 'Me' ? '' : name;
 }
 
 /** Kept apart from Google's full_name, which Supabase rewrites on each Google sign-in. */
 export async function setAccountName(firstName: string, lastName: string): Promise<void> {
+  if (!accountConfigured()) {
+    const [me, ...others] = getSettings().shoppers;
+    updateSettings({ shoppers: [{ ...me!, name: `${firstName.trim()} ${lastName.trim()}`.trim() || 'Me' }, ...others] });
+    broadcastSettings();
+    return;
+  }
   const { error } = await requireClient().auth.updateUser({
     data: { first_name: firstName.trim(), last_name: lastName.trim() },
   });

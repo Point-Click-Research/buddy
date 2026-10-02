@@ -37,7 +37,7 @@ export function takeStoryTurn(): boolean {
  * The .app that macOS attributes permissions to: Buddy.app, or Electron.app
  * in development. Either way the executable sits at Contents/MacOS inside it.
  */
-export function appBundlePath(): string {
+function appBundlePath(): string {
   return resolve(process.execPath, '../../..');
 }
 

@@ -26,7 +26,7 @@ export interface PaymentCard {
  * Parse and validate the Settings form. Throws with a message the form can
  * show; the thrown message never contains the digits themselves.
  */
-export function parseCardDraft(draft: PaymentCardDraft): PaymentCard {
+function parseCardDraft(draft: PaymentCardDraft): PaymentCard {
   const number = String(draft.number ?? '').replace(/[\s-]/g, '');
   if (!/^\d{13,19}$/.test(number) || !looksLikeCardNumber(number)) {
     throw new Error("That doesn't look like a valid card number.");

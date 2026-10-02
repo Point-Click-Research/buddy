@@ -2,6 +2,7 @@
 
 import { app, Menu, screen, Tray, type MenuItemConstructorOptions } from 'electron';
 import { APP_NAME, type Annotation } from '../shared/types';
+import { accountConfigured } from './account/config';
 import { restartWalk } from './account/local';
 import { replayWalk } from './tour';
 import { hasStoredAccount, startAccount } from './account/session';
@@ -271,7 +272,8 @@ function createTray(): void {
         { label: 'Test annotations', click: drawTestAnnotations },
         { label: 'Restart onboarding', click: () => {
           const accountId = restartWalk();
-          if (accountId) replayWalk(accountId);
+          // With no account there is no walk: the Launch screen comes back instead.
+          if (accountId && accountConfigured()) replayWalk(accountId);
           openHomeWindow();
         } },
         // Every shape, stroke and animation, for eyes rather than tests.

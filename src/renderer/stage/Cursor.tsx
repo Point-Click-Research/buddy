@@ -1,5 +1,3 @@
-'use client';
-
 import { motion, type MotionValue } from 'motion/react';
 import type { ReactElement } from 'react';
 

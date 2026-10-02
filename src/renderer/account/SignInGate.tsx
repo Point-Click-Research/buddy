@@ -1,8 +1,10 @@
 // The whole window while this build has a Buddy account and nobody is signed
-// in. The shot itself loads only then: the signed-in window never pulls it.
+// in, or, in a build with no account service, until Buddy is first launched.
+// The shot itself loads only then: the signed-in window never pulls it.
 
 import { lazy, Suspense, useEffect, useState, type ReactElement } from 'react';
 import { buddy } from '../buddy';
+import { useSettingsView } from '../home/settings-data';
 import { useAccount } from '../shared/account-data';
 
 const SignInScene = lazy(() => import('./SignInScene').then((m) => ({ default: m.SignInScene })));
@@ -17,6 +19,7 @@ buddy.onHomeReveal(() => {
 
 export function SignInGate(): ReactElement | null {
   const account = useAccount();
+  const launched = useSettingsView()?.settings.onboardingDone;
   // Closing the chat window hides it without tearing down React. Remount the
   // shot only when that window is shown again. Opening the Google sign-in
   // browser covers the window and must leave the form where it is.
@@ -41,10 +44,11 @@ export function SignInGate(): ReactElement | null {
     return () => document.removeEventListener('visibilitychange', onVisible);
   }, [shown]);
 
-  if (!shown || !account || !account.configured || account.signedIn) return null;
+  if (!shown || !account) return null;
+  if (account.configured ? account.signedIn : launched !== false) return null;
   return (
     <Suspense fallback={<div className="fixed inset-0 z-50 bg-canvas" />}>
-      <SignInScene key={playId} />
+      <SignInScene key={playId} launch={!account.configured} />
     </Suspense>
   );
 }

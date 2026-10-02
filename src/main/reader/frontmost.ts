@@ -20,7 +20,7 @@ const TOOL_TIMEOUT_MS = 20_000;
 /** Selection is probed on every mouse-up, so it never waits on a prompt. */
 const PROBE_TIMEOUT_MS = 2_500;
 
-export const AUTOMATION_HINT =
+const AUTOMATION_HINT =
   'macOS is blocking Buddy from reading other apps. Open System Settings → Privacy & Security → ' +
   'Automation and allow Buddy to control System Events (and your browser), then ask me again.';
 

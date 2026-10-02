@@ -16,14 +16,13 @@ export function text(value: unknown): string {
 }
 
 /** A fixed-length array of finite numbers, or null. */
-export function numbers(value: unknown, length: number): number[] | null {
+function numbers(value: unknown, length: number): number[] | null {
   if (!Array.isArray(value) || value.length !== length) return null;
   return value.every((n) => typeof n === 'number' && Number.isFinite(n)) ? (value as number[]) : null;
 }
 
-export function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
-}
+export { clamp } from '../coords';
+export { setTimeout as sleep } from 'node:timers/promises';
 
 export function invalid(detail: string): ActionOutcome {
   return { error: computerError('INVALID_REQUEST', detail) };
@@ -31,10 +30,6 @@ export function invalid(detail: string): ActionOutcome {
 
 export function unsupported(detail: string): ActionOutcome {
   return { error: computerError('UNSUPPORTED_ACTION', detail) };
-}
-
-export function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 /** A coordinate pair together with the frame it was measured in. */

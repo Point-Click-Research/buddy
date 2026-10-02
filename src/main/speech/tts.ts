@@ -7,6 +7,7 @@ import { randomUUID } from 'node:crypto';
 import { readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { keyWarningKind, keyWarningText } from '../../shared/key-warning';
 import { type Settings, type TtsProvider } from '../../shared/types';
 import { credentials, managedCredentials, providerReady } from '../account/credentials';
@@ -558,7 +559,7 @@ async function requestElevenLabs(voiceId: string, text: string): Promise<Uint8Ar
   if (response.status === 409) {
     // Transient "already_running" conflict when two sentences synthesize in
     // parallel on the same voice: wait briefly and retry once.
-    await new Promise((resolve) => setTimeout(resolve, 750));
+    await sleep(750);
     response = await attempt(elevenLabsModel);
   }
   if ([400, 402, 403].includes(response.status) && elevenLabsModel !== 'eleven_multilingual_v2') {

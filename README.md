@@ -434,8 +434,10 @@ servers and let the model call their tools while it answers: web search, for
 example, when the answer isn't on your screen. Manage them in
 Settings → **MCP servers**, which shows each server's status and its tools.
 
-**Web search.** A signed-in account gets Exa through Buddy's key. A key pasted
-on that server talks to Exa directly instead.
+**Web search and phone calls.** A signed-in account gets Exa and Bland through
+Buddy's keys. Without an account, add them from **Recommended** on that page
+with your own [Exa](https://dashboard.exa.ai) and [Bland](https://app.bland.ai)
+keys. A pasted key talks to the service directly.
 
 **Anything else.** Settings → **MCP servers** takes either transport:
 

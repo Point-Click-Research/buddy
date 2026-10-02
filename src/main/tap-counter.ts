@@ -3,9 +3,9 @@
 // taps it makes. No Electron or uiohook imports, so it's fully unit-testable.
 
 /** A tap is Control held no longer than this. */
-export const TAP_MAX_HOLD_MS = 250;
+const TAP_MAX_HOLD_MS = 250;
 /** The next tap must start within this long after the previous tap ended. */
-export const TAP_MAX_GAP_MS = 400;
+const TAP_MAX_GAP_MS = 400;
 
 export interface TapEvent {
   type: 'down' | 'up';

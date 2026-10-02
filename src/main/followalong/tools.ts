@@ -28,7 +28,7 @@ export interface Walkthrough {
   steps: string[];
 }
 
-export type WaitResult =
+type WaitResult =
   | { kind: 'done'; detail: string }
   | { kind: 'timeout'; detail: string }
   | { kind: 'skip' }
@@ -63,10 +63,6 @@ export function noteScreenKey(): void {
   const { x, y } = screen.getCursorScreenPoint();
   lastAct = { x, y, at: Date.now() };
   nudge?.();
-}
-
-export function isWaitingForStep(): boolean {
-  return waiting !== null;
 }
 
 export function setFollowAlongRunningCheck(check: () => boolean): void {

@@ -3,7 +3,7 @@
 // Pure: the prompt and tests both call this.
 
 /** How far ahead a date still counts as coming up. */
-export const OCCASION_WINDOW_DAYS = 45;
+const OCCASION_WINDOW_DAYS = 45;
 
 interface Occasion {
   at: Date;

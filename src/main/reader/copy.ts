@@ -7,6 +7,7 @@
 // Whatever was on the clipboard is put back afterwards.
 
 import { execFile } from 'child_process';
+import { setTimeout as wait } from 'timers/promises';
 import { promisify } from 'util';
 import { clipboard } from 'electron';
 import { createLogger } from '../log';
@@ -72,8 +73,4 @@ async function waitForClipboard(): Promise<string> {
     if (text !== SENTINEL) return text;
   }
   return '';
-}
-
-function wait(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

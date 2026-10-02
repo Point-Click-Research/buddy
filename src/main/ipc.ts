@@ -173,9 +173,11 @@ function registerAccountIpc(): void {
   });
   ipcMain.handle(IpcChannels.accountGet, () => accountView());
   ipcMain.handle(IpcChannels.accountSignInGoogle, () => attempt(signInWithGoogle));
-  ipcMain.handle(IpcChannels.accountSetName, (_event, firstName: string, lastName: string) =>
-    attempt(() => setAccountName(String(firstName ?? ''), String(lastName ?? ''))),
-  );
+  ipcMain.handle(IpcChannels.accountSetName, async (_event, firstName: string, lastName: string) => {
+    const result = await attempt(() => setAccountName(String(firstName ?? ''), String(lastName ?? '')));
+    broadcast(IpcChannels.accountChanged, await accountView());
+    return result;
+  });
   ipcMain.handle(IpcChannels.accountSignOut, async (_event, opts?: { showSignIn?: boolean }) => {
     await signOut();
     if (opts?.showSignIn) {

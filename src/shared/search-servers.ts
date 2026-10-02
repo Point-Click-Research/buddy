@@ -10,9 +10,3 @@ export function isParallelServer(server: { name: string; url: string }): boolean
   const url = server.url.toLowerCase();
   return name === 'parallel' || url.includes('search.parallel.ai');
 }
-
-export function isContext7Server(server: { name: string; url: string }): boolean {
-  const name = server.name.toLowerCase();
-  const url = server.url.toLowerCase();
-  return name === 'context7' || url.includes('mcp.context7.com');
-}

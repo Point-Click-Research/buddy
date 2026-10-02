@@ -29,7 +29,7 @@ export interface ExaSearchRequest {
 }
 
 /** The key pasted on the Exa server under Hands, if any. */
-export function exaApiKey(): string | null {
+function exaApiKey(): string | null {
   for (const server of listServers()) {
     if (!server.enabled || !isExaServer(server)) continue;
     const header = Object.entries(server.headers).find(([name]) => name.toLowerCase() === 'x-api-key');

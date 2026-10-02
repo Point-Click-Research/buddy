@@ -6,6 +6,7 @@
 import { shell } from 'electron';
 import { connectAppLabel, splitConnectAppTool } from '../../shared/connect-apps';
 import type { AppConnection } from '../../shared/types';
+import { accountConfigured } from '../account/config';
 import type { ToolOutcome, ToolRegistry } from '../ai/tools';
 import { senderLabel } from '../automated-sender';
 import { createLogger } from '../log';
@@ -65,13 +66,14 @@ export function knownConnectedApps(): string[] | null {
  * Every toolkit this Mac holds an account for, with whether it still works.
  * Null when Apps cannot be asked yet (not signed in, or the account's keys
  * are still loading): an empty list would read as "nothing connected".
+ * A build with no account service has nothing to wait for, so it is empty.
  * Empty when airplane mode is on, or a real list came back with nothing.
  * Also refreshes the active-slug cache the prompts read.
  */
 export async function listAppConnections(): Promise<AppConnection[] | null> {
   if (grounded()) return [];
   const backend = appsBackend();
-  if (!backend) return null;
+  if (!backend) return accountConfigured() ? null : [];
   const connections = await backend.connections();
   known = { backend: backend.id, slugs: connections.filter((entry) => entry.status === 'active').map((entry) => entry.slug) };
   return connections;

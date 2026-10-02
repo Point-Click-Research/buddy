@@ -11,7 +11,7 @@ import { sanitizeSettingsPatch } from './sanitize';
 
 export type AppSecretName = 'composio' | 'shopify' | 'card' | 'account';
 
-export interface StoreShape {
+interface StoreShape {
   settings: Partial<Settings>;
   secrets: Partial<Record<KeyProvider, string>>; // base64 of encrypted bytes
   /** Composio and Shopify Catalog keys. Same keychain encryption, not brain providers. */

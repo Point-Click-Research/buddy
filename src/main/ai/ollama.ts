@@ -12,6 +12,7 @@ import type {
 import { execFile } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { totalmem } from 'node:os';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { promisify } from 'node:util';
 import { type KeyTestResult, type OllamaStatus } from '../../shared/types';
 import { createLogger } from '../log';
@@ -363,7 +364,7 @@ export async function installOllama(): Promise<KeyTestResult> {
   // brew services comes up in a moment; wait for the API rather than reporting early.
   for (let tries = 0; tries < 10; tries++) {
     if ((await ollamaStatus()).running) return { ok: true, message: 'Ollama is installed and running.' };
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+    await sleep(1000);
   }
   return { ok: false, message: 'Ollama installed but has not started yet. Open the Ollama app to start it.' };
 }

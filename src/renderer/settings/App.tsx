@@ -56,7 +56,7 @@ import { IntegrationsPage, INTEGRATION_ROUTES } from './pages/IntegrationsPage';
 import { McpServersPage } from './pages/HandsPage';
 
 /** Account first, then senses, what Buddy can reach, and the Mac. Developer tools sit last. */
-export const PAGE_GROUPS = [
+const PAGE_GROUPS = [
   {
     items: [{ id: 'account', label: 'Account' }],
   },
@@ -103,8 +103,8 @@ export const PAGE_GROUPS = [
 ] as const;
 
 type PageEntry = (typeof PAGE_GROUPS)[number]['items'][number];
-export type PageId = PageEntry['id'];
-export const PAGES: PageEntry[] = PAGE_GROUPS.flatMap((group) => [...group.items]);
+type PageId = PageEntry['id'];
+const PAGES: PageEntry[] = PAGE_GROUPS.flatMap((group) => [...group.items]);
 
 const PAGE = {
   brain: BrainPage,

@@ -6,7 +6,7 @@
 // preset menus, the onboarding keycaps), so every side agrees on what a
 // valid chord is.
 
-export const CHORD_MODIFIERS = ['Control', 'Alt', 'Shift', 'Meta'] as const;
+const CHORD_MODIFIERS = ['Control', 'Alt', 'Shift', 'Meta'] as const;
 export type ChordModifier = (typeof CHORD_MODIFIERS)[number];
 
 const MODIFIER_SET = new Set<string>(CHORD_MODIFIERS);

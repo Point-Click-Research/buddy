@@ -73,7 +73,7 @@ function cachedMe(): Cached | null {
   return me;
 }
 
-export async function fetchMe(force = false): Promise<Me | null> {
+async function fetchMe(force = false): Promise<Me | null> {
   const session = currentSession();
   if (!session || !accountConfigured()) return null;
   const cached = cachedMe();

@@ -5,6 +5,8 @@
 //
 // Pure module, unit-tested.
 
+import { clamp } from '../coords';
+
 /** One word with its position in the recording, when the ear provides them. */
 export interface WordTiming {
   word: string;
@@ -85,8 +87,4 @@ export function insertMarkTokens(
     if (inserted) parts.push(...inserted);
   }
   return { text: parts.join(' '), approximate: !timed };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

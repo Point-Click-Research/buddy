@@ -1,7 +1,7 @@
 import type { ReactElement, ReactNode } from 'react';
 import { cn } from './cn';
 
-export type SidebarItem = {
+type SidebarItem = {
   id: string;
   label: string;
   /** A small mark before the label. */

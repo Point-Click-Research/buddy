@@ -3,6 +3,7 @@ import { isExaServer } from '../../../shared/search-servers';
 import { BUILTIN_TOOLS, isBlandServer, mcpServerLabel } from '../../../shared/types';
 import type { McpServerDraft, McpServerView, ToolPermission } from '../../../shared/types';
 import { buddy } from '../../buddy';
+import { useAccount } from '../../shared/account-data';
 import {
   Actions,
   Button,
@@ -42,9 +43,31 @@ interface RecommendedServer {
   /** Prepended to the pasted key (e.g. "Bearer "). */
   authPrefix?: string;
   keyBlurb?: string;
+  /** The server does nothing without a key, so Add waits for one. */
+  keyRequired?: boolean;
 }
 
+// Exa and Bland are the servers Buddy's account adds keyless; once one is
+// configured (by the account or by hand) it drops out of this list.
 const RECOMMENDED: RecommendedServer[] = [
+  {
+    label: 'Exa',
+    blurb: 'Web, product, and place search.',
+    name: 'exa',
+    url: 'https://mcp.exa.ai/mcp',
+    keyHeader: 'x-api-key',
+    keyBlurb: 'Web search, plus product and place search. Get a key at dashboard.exa.ai.',
+    keyRequired: true,
+  },
+  {
+    label: 'Bland',
+    blurb: 'Phone calls Buddy places for you.',
+    name: 'bland',
+    url: 'https://api.bland.ai/v1/mcp',
+    keyHeader: 'Authorization',
+    keyBlurb: 'Lets Buddy call places for you. Get a key at app.bland.ai.',
+    keyRequired: true,
+  },
   {
     label: 'Context7',
     blurb: 'Fresh docs for dev libraries.',
@@ -54,6 +77,11 @@ const RECOMMENDED: RecommendedServer[] = [
     keyBlurb: 'Adds Context7 docs. API key optional.',
   },
 ];
+
+const sameServer =
+  (rec: RecommendedServer) =>
+  (server: McpServerView): boolean =>
+    server.name === rec.name || server.url === rec.url;
 
 const EMPTY: McpServerDraft = {
   name: '',
@@ -210,6 +238,7 @@ let lastServers: McpServerView[] = [];
 /** Connected MCP servers: the list, the editor, the gallery, the result limit. */
 export function McpServersPage(): ReactElement {
   const { view, patch } = useSettings();
+  const own = useAccount()?.configured === false;
   const [servers, setServersState] = useState<McpServerView[]>(lastServers);
   const setServers = (next: McpServerView[]): void => {
     lastServers = next;
@@ -228,6 +257,7 @@ export function McpServersPage(): ReactElement {
   const addRecommended = (rec: RecommendedServer, key: string): void => {
     void buddy
       .saveMcpServer({
+        id: servers.find(sameServer(rec))?.id,
         name: rec.name,
         transport: 'http',
         enabled: true,
@@ -286,15 +316,15 @@ export function McpServersPage(): ReactElement {
     if (!builtin) return true;
     return Object.values(server.headers).some((value) => value.trim().length > 0);
   });
-  const suggestions = RECOMMENDED.filter(
-    (rec) => !servers.some((server) => server.name === rec.name || server.url === rec.url),
-  );
+  // Without an account a hidden keyless builtin does nothing, so it shouldn't block adding a keyed one.
+  const configured = own ? listed : servers;
+  const suggestions = RECOMMENDED.filter((rec) => !configured.some(sameServer(rec)));
 
   return (
     <>
       <SectionHeader
         title="MCP servers"
-        description="Servers you add. Web search and phone calls are already included."
+        description={`Servers you add. ${own ? 'Add Exa for web search and Bland for phone calls below.' : 'Web search and phone calls are already included.'}`}
       />
 
       {listed.map((server) => (
@@ -375,10 +405,14 @@ export function McpServersPage(): ReactElement {
           <p className="text-[13px] leading-5 text-muted">{picked.keyBlurb}</p>
           <TextInput
             type="password"
-            placeholder={`${picked.label} API key (optional)`}
+            placeholder={`${picked.label} API key${picked.keyRequired ? '' : ' (optional)'}`}
             value={pickedKey}
             onChange={(event) => setPickedKey(event.target.value)}
-            action={{ label: 'Add', onClick: () => addRecommended(picked, pickedKey) }}
+            action={{
+              label: 'Add',
+              disabled: picked.keyRequired && !pickedKey.trim(),
+              onClick: () => addRecommended(picked, pickedKey),
+            }}
           />
           <Actions>
             <Button variant="secondary" onClick={() => setSubform(null)}>
@@ -535,7 +569,7 @@ export function McpServersPage(): ReactElement {
 
       {suggestions.length > 0 && (
         <>
-          <SectionHeader title="Recommended" description="One-click hosted servers. Keys optional." />
+          <SectionHeader title="Recommended" description="One-click hosted servers." />
           <Table
             columns={[
               { key: '#', label: '#' },

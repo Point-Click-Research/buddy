@@ -274,7 +274,7 @@ function requestShape(system: string, tools: Tool[], chat: ChatMessage[]): strin
 const LOG_ARGS_CHARS = 160;
 
 /** `computer click_element {"ref":"e3",…}`: the tool, its action, and its arguments clipped. */
-export function toolLabel(name: string, input: unknown): string {
+function toolLabel(name: string, input: unknown): string {
   if (input === null || typeof input !== 'object') return name;
   const { action, ...rest } = input as { action?: unknown } & Record<string, unknown>;
   const head = name === 'computer' && typeof action === 'string' ? `computer ${action}` : name;

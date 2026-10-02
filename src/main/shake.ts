@@ -4,13 +4,13 @@
 // cursor. No Electron imports, so it's fully unit-testable.
 
 /** All the reversals of a shake must land inside this window. */
-export const SHAKE_WINDOW_MS = 600;
+const SHAKE_WINDOW_MS = 600;
 /** Each leg (one sweep before turning back) must cover at least this. */
-export const SHAKE_MIN_LEG_PX = 40;
+const SHAKE_MIN_LEG_PX = 40;
 /** Direction reversals needed: left-right-left-right. */
-export const SHAKE_REVERSALS = 3;
+const SHAKE_REVERSALS = 3;
 /** One shake opens the box once; ignore wiggles for this long after. */
-export const SHAKE_COOLDOWN_MS = 1_000;
+const SHAKE_COOLDOWN_MS = 1_000;
 
 /** The cursor stopped for this long: whatever was building is over. */
 const PAUSE_MS = 200;

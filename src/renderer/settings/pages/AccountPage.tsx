@@ -30,8 +30,12 @@ export function AccountPage(): ReactElement {
   if (!view.configured) {
     return (
       <>
-        <SectionHeader title="Account" description="Sign in and Buddy works, no API keys to paste." />
-        <Note>This build has no Buddy account service configured. Buddy runs on your own keys under Developer → API keys.</Note>
+        <Profile view={view} />
+        <SectionHeader title="Account" />
+        <Note>
+          This build has no Buddy account service, so there is nothing to sign in to. Buddy runs on your own keys under
+          Developer → API keys, and your name stays on this Mac.
+        </Note>
         <Updates />
         <Feedback />
       </>
@@ -225,7 +229,7 @@ function Profile({ view }: { view: AccountView }): ReactElement {
     if (firstName.trim() === view.firstName && lastName.trim() === view.lastName) return;
     void buddy.setAccountName(firstName, lastName).then((result) => setError(result.ok ? '' : result.message));
   };
-  const identity = formatIdentity(view.identity);
+  const identity = view.configured ? formatIdentity(view.identity) : 'Saved on this Mac';
   return (
     <>
       <SectionHeader title="Profile" />

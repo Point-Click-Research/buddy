@@ -34,7 +34,7 @@ export const SKIP_DIRS = new Set([
 ]);
 
 /** Files whose presence marks a directory as a project root. */
-export const PROJECT_MARKERS = [
+const PROJECT_MARKERS = [
   '.git',
   'package.json',
   'pnpm-workspace.yaml',

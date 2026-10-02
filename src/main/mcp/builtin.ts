@@ -5,8 +5,8 @@
 import { isExaServer } from '../../shared/search-servers';
 import { isBlandServer } from '../../shared/types';
 
-export const BLAND_MCP_URL = 'https://api.bland.ai/v1/mcp';
-export const EXA_MCP_URL = 'https://mcp.exa.ai/mcp';
+const BLAND_MCP_URL = 'https://api.bland.ai/v1/mcp';
+const EXA_MCP_URL = 'https://mcp.exa.ai/mcp';
 
 const BUILTIN = [
   { name: 'bland', url: BLAND_MCP_URL, managed: 'bland' },

@@ -1,5 +1,3 @@
-'use client';
-
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { Suspense, useEffect, useMemo, useRef, type ReactElement, type RefObject } from 'react';
 import { Mesh, type BufferGeometry, type PointLight } from 'three';

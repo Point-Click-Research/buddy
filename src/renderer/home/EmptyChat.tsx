@@ -5,14 +5,6 @@
 import { type ReactElement, type ReactNode } from 'react';
 import { dayPart } from '../../shared/greeting';
 import { useAccount } from '../shared/account-data';
-// import { BoxPile } from './BoxPile';
-
-/** The verbs the title types through; the first is what it opens on. */
-// const VERBS = ['doing?', 'looking for?', 'buying?', 'booking?', 'calling about?', 'planning?'];
-// /** Typewriter pacing: deleting runs quicker than typing, and a whole word holds. */
-// const TYPE_MS = 70;
-// const DELETE_MS = 45;
-// const HOLD_MS = 1600;
 
 export function EmptyChat({
   composer,
@@ -32,7 +24,6 @@ export function EmptyChat({
         centered ? 'grid-rows-[minmax(0,9fr)_auto_minmax(0,8fr)]' : 'grid-rows-[minmax(0,4fr)_auto_minmax(0,5fr)]'
       }`}
     >
-      {/* <BoxPile /> */}
       <div className="flex flex-col justify-end overflow-visible pb-6">
         <Greeting />
       </div>
@@ -58,42 +49,3 @@ function Greeting(): ReactElement {
     </h1>
   );
 }
-
-/**
- * Types each verb out behind a blinking caret, holds the whole word, deletes
- * it, and starts on the next. Only what is typed takes up space, so the
- * centered title stays centered on what is visible.
- */
-// function TypewriterVerb(): ReactElement {
-//   const [text, setText] = useState(VERBS[0]);
-//   useEffect(() => {
-//     let verb = 0;
-//     let length = VERBS[0].length;
-//     let deleting = true;
-//     let timer: ReturnType<typeof setTimeout>;
-//     const step = () => {
-//       if (deleting) {
-//         length -= 1;
-//         if (length === 0) {
-//           verb = (verb + 1) % VERBS.length;
-//           deleting = false;
-//         }
-//       } else {
-//         length += 1;
-//         if (length === VERBS[verb].length) deleting = true;
-//       }
-//       setText(VERBS[verb].slice(0, length));
-//       // Just finished a word: hold it. Otherwise pace by direction.
-//       const delay = !deleting ? TYPE_MS : length === VERBS[verb].length ? HOLD_MS : DELETE_MS;
-//       timer = setTimeout(step, delay);
-//     };
-//     timer = setTimeout(step, HOLD_MS);
-//     return () => clearTimeout(timer);
-//   }, []);
-//   return (
-//     <span>
-//       {text}
-//       <span className="typing-caret" aria-hidden />
-//     </span>
-//   );
-// }

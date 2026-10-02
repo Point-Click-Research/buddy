@@ -90,7 +90,7 @@ export type SystemOne = (request: { state: JevState; questions: Questions }) => 
   answers: Record<string, unknown>;
 }>;
 
-export function fromClient(client: Pick<TypeSafeClient, 'systemOne'>): Jev {
+function fromClient(client: Pick<TypeSafeClient, 'systemOne'>): Jev {
   return fromSystemOne((request) => client.systemOne(request));
 }
 

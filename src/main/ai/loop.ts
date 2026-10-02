@@ -228,7 +228,7 @@ const OMITTED = { type: 'text', text: '[screenshot omitted]' } as const;
 const DRAWING_TOOLS = new Set(['draw', 'update_drawing', 'erase']);
 
 /** A tool whose same-turn text is the answer rather than a "let me check". */
-export function speaksAlongside(tools: ToolRegistry, name: string): boolean {
+function speaksAlongside(tools: ToolRegistry, name: string): boolean {
   const tool = tools.get(name);
   return Boolean(tool?.immediate || tool?.spokenAlongside);
 }

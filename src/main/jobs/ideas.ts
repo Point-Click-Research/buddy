@@ -165,7 +165,7 @@ async function runIdeas(): Promise<void> {
  * The idea leaves the deck once it is taken. `cap` is how many the plan
  * runs (see autoRunCap); the rest wait on New Chat.
  */
-export async function runSafeIdeas(
+async function runSafeIdeas(
   ideas: Idea[],
   cap = Infinity,
 ): Promise<void> {

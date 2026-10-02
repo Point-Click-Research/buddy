@@ -76,7 +76,7 @@ const EDITABLE_ROLES = new Set(['textfield', 'searchfield', 'textarea', 'combobo
 const CONSEQUENTIAL = /\b(pay|place order|buy|purchase|order now|check ?out|submit|send|confirm|delete|remove|unsubscribe|sign out|log out)\b/i;
 
 /** What System One may do in one step. */
-export type Operation = 'click' | 'type' | 'scroll_down' | 'scroll_up' | 'done' | 'blocked' | 'other';
+type Operation = 'click' | 'type' | 'scroll_down' | 'scroll_up' | 'done' | 'blocked' | 'other';
 
 /** How each operation reads as an option. The three at the end hand the turn back. */
 const OPERATIONS: Record<Operation, string> = {

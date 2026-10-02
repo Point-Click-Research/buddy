@@ -30,7 +30,7 @@ export function toggleQuickAsk(): void {
   else openQuickAsk();
 }
 
-export function openQuickAsk(highlight = ''): void {
+function openQuickAsk(highlight = ''): void {
   if (open) return;
   // Not over an agent mid-task (the capture would steal the mouse out from
   // under its clicks) or a pending card (whose keyboard the box would take).

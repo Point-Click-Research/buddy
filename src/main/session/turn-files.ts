@@ -45,7 +45,7 @@ export function stageTurnFiles(drafts: AttachmentDraft[]): TurnFile[] {
 }
 
 /** The staged file with this name (or its basename), case-insensitive; null when the model made one up. */
-export function turnFile(name: string): TurnFile | null {
+function turnFile(name: string): TurnFile | null {
   const wanted = name.trim().toLowerCase();
   return staged.find((file) => file.name.toLowerCase() === wanted || basename(file.name).toLowerCase() === wanted) ?? null;
 }

@@ -144,7 +144,7 @@ export async function createCuaProvider(displayId: number, hooks: DriverSafetyHo
  * the excluded-apps check then has nothing to hold it to.
  * Exported for tests; the provider is the only production caller.
  */
-export function describeTarget(name: string, input: Record<string, unknown>, io: CuaIo): string | null {
+function describeTarget(name: string, input: Record<string, unknown>, io: CuaIo): string | null {
   if (!ACTIONS[name]?.mutates) return null;
   if (ACTIONS[name].family === 'element') {
     const found = io.observations.resolve(input['observation_id'], input['ref']);

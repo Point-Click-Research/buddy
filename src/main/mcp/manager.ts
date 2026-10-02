@@ -23,7 +23,7 @@ import { requestConfirmation } from './confirm';
 import { buildToolNameMap } from './naming';
 import { allowedInAirplaneMode, decidePermission, type ToolAnnotations } from './permissions';
 import { toToolOutcome, type McpCallResult } from './results';
-import { dialedPhone, exposesTool, isOutboundBlandCall, outboundCallNote, withGreetingWait, blandProxyUrl } from './bland-call';
+import { dialedPhone, exposesTool, isOutboundBlandCall, outboundCallNote, withGreetingWait, blandProxyUrl, hasOwnBlandKey } from './bland-call';
 import { toolConfirmCard } from './tool-card';
 import { IpcChannels } from '../../shared/ipc';
 import { errorMessage } from '../../shared/errors';
@@ -105,7 +105,7 @@ export function syncMcpServers(): void {
     }
   }
   for (const config of configs.values()) {
-    if (!config.enabled || runtimes.has(config.id)) continue;
+    if (!config.enabled || runtimes.has(config.id) || unkeyedBland(config)) continue;
     const runtime: Runtime = {
       config,
       client: null,
@@ -120,6 +120,11 @@ export function syncMcpServers(): void {
     void connect(runtime);
   }
   notifyChange();
+}
+
+/** Bland refuses a keyless connection, so without the account's proxy it would only retry forever. */
+function unkeyedBland(config: McpServerConfig): boolean {
+  return isBlandServer({ ...config, enabled: true }) && !hasOwnBlandKey(config.headers) && !managedReady('bland');
 }
 
 async function connect(runtime: Runtime): Promise<void> {
@@ -209,10 +214,6 @@ function createTransport(config: McpServerConfig) {
 /** Is a server usable this turn? Airplane mode grounds the remote ones. */
 function usable(runtime: Runtime): boolean {
   return !getSettings().airplaneMode || allowedInAirplaneMode(runtime.config.transport, runtime.config.url);
-}
-
-export function hasMcpTools(): boolean {
-  return [...runtimes.values()].some((r) => r.status === 'connected' && r.tools.length > 0 && usable(r));
 }
 
 /** Exa is connected, so the prompt can treat web search as available. */

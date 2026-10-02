@@ -71,7 +71,6 @@ export const BLAND_VOICES = [
   "derek",
   "paige",
 ] as const;
-export type BlandVoice = (typeof BLAND_VOICES)[number];
 
 /**
  * Whether an MCP server is the Bland phone server. Shared so the prompt
@@ -241,15 +240,15 @@ export const BUILTIN_TOOLS: BuiltinTool[] = [
 ];
 
 /** When run_command asks for approval: every command, or only risky ones. */
-export type RunCommandApproval = "always" | "risky";
+type RunCommandApproval = "always" | "risky";
 
 /** When the coding tools' file writes ask for approval: every change, only risky ones, or never. */
-export type CodingEditApproval = "always" | "risky" | "auto";
+type CodingEditApproval = "always" | "risky" | "auto";
 
 // --- MCP servers -------------------------------------------------------------
 
 export type McpTransport = "http" | "stdio";
-export type McpServerStatus = "connected" | "connecting" | "error" | "disabled";
+type McpServerStatus = "connected" | "connecting" | "error" | "disabled";
 export type ToolPermission = "allow" | "ask" | "deny";
 
 /** Shown instead of encrypted header/env values; sending it back keeps the stored value. */
@@ -271,7 +270,7 @@ export interface McpServerDraft {
   env: Record<string, string>;
 }
 
-export interface McpToolView {
+interface McpToolView {
   name: string;
   /** The sanitized `<server>__<tool>` name the model sees. */
   exposedName: string;
@@ -430,7 +429,7 @@ export interface AgentDrivingHud {
 }
 
 /** Which implementation drives the computer in agent mode. */
-export type ComputerProviderId = "cua" | "basic";
+type ComputerProviderId = "cua" | "basic";
 
 /** Where the caption bubble (and activity pill) sit on the display. */
 export type BubbleLocation =
@@ -489,7 +488,7 @@ export interface VocabularyEntry {
  * reasoning, start to finish; `said` is what Buddy told the user when the
  * task ended. `pending` is set while the task is still running.
  */
-export interface AgentTaskTrace {
+interface AgentTaskTrace {
   thought: string;
   said?: string;
   pending?: boolean;
@@ -565,7 +564,7 @@ export interface SelectionShow {
 export type MarkKind = "tap" | "region" | "underline" | "path";
 
 /** One sampled point of a user stroke: overlay-local DIP plus epoch ms. */
-export interface MarkStrokePoint {
+interface MarkStrokePoint {
   x: number;
   y: number;
   t: number;
@@ -723,7 +722,7 @@ export interface AppConnection {
 }
 
 /** Secrets that are not brain or voice providers. Status only; values stay in the keychain. */
-export interface AppKeyStatus {
+interface AppKeyStatus {
   composio: boolean;
   shopify: boolean;
   /** '' when no card is saved; otherwise a display label like "Visa •••• 4242". Never the digits. */
@@ -967,9 +966,6 @@ export type KeyProvider = "openrouter" | "elevenlabs" | "jev";
 /** Where the brain runs: every cloud model through OpenRouter, or the local Ollama model by choice. */
 export type BrainProvider = "openrouter" | "ollama";
 
-/** The cloud brain, for the calls that cannot run locally (agent tasks, distillation). */
-export type CloudBrainProvider = Exclude<BrainProvider, "ollama">;
-
 /**
  * How hard a cloud model thinks. `auto` picks a level from the kind of turn.
  * The rest go out as OpenRouter's reasoning effort, which it maps onto each
@@ -1079,7 +1075,7 @@ export interface ModelListResult {
 }
 
 /** Mirrors Electron's media access statuses; accessibility maps to granted/denied. */
-export type PermissionState =
+type PermissionState =
   | "granted"
   | "denied"
   | "restricted"

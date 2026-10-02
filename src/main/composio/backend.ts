@@ -40,7 +40,7 @@ export interface AppsBackend {
 }
 
 /** A file on this Mac to hand an app tool. */
-export interface AppFile {
+interface AppFile {
   name: string;
   path: string;
   mediaType: string;

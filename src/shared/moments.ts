@@ -96,7 +96,7 @@ export function isQuiet(now: number, events: MomentEvent[]): boolean {
 }
 
 /** The evening and the small hours. */
-export function isLate(now: number): boolean {
+function isLate(now: number): boolean {
   const hour = new Date(now).getHours();
   return hour >= 22 || hour < 7;
 }

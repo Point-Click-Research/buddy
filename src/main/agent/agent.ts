@@ -4,6 +4,7 @@
 
 import type { ContentBlockParam, ToolUseBlockParam } from '@anthropic-ai/sdk/resources/messages';
 import { screen } from 'electron';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { activityLabel, setActivity } from '../activity';
 import { streamCloud } from '../ai/brain';
 import { resolveEffort } from '../ai/effort';
@@ -599,7 +600,7 @@ async function announce(provider: ComputerProvider, action: ComputerAction): Pro
   const target = provider.locate(action);
   if (!target) return;
   flyBuddyTo(target.x + target.width / 2, target.y + target.height / 2);
-  await new Promise((resolve) => setTimeout(resolve, ANNOUNCE_PAUSE_MS));
+  await sleep(ANNOUNCE_PAUSE_MS);
 }
 
 function report(message: string): void {

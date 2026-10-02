@@ -154,7 +154,7 @@ export const WEEKDAY_NAMES = [
 ];
 
 /** "10:30 AM", the way a time reads on a card. */
-export function clockTimeLabel(hour: number, minute: number): string {
+function clockTimeLabel(hour: number, minute: number): string {
   const twelve = hour % 12 === 0 ? 12 : hour % 12;
   return `${twelve}:${String(minute).padStart(2, "0")} ${hour < 12 ? "AM" : "PM"}`;
 }
@@ -236,7 +236,7 @@ export function retryAt(
 // --- Jobs ------------------------------------------------------------------------
 
 /** Local abilities (BUILTIN_TOOLS ids): the ones that act on this Mac itself. */
-export const LOCAL_JOB_TOOL_IDS = [
+const LOCAL_JOB_TOOL_IDS = [
   "run_command",
   "browser_tabs",
   "messages",

@@ -8,9 +8,6 @@ import { requestEditableConfirmation } from '../mcp/confirm';
 import { getSettings, updateSettings } from '../settings';
 import { parseRecipe, recipeToSkill, similarSkill } from './distill-recipe';
 
-export { parseRecipe, recipeToSkill } from './distill-recipe';
-export type { DistilledRecipe } from './distill-recipe';
-
 const log = createLogger('distill');
 
 /** Anything shorter taught the run nothing worth reusing. */
@@ -35,7 +32,7 @@ Be brief — the recipe is read by the model that will run it. If the log shows 
  * Distill one run into a recipe string. Never throws: a failed distillation
  * must cost the finished task nothing.
  */
-export async function distillWorkflow(goal: string, entries: AgentLogEntry[]): Promise<string | null> {
+async function distillWorkflow(goal: string, entries: AgentLogEntry[]): Promise<string | null> {
   if (entries.length < MIN_ACTIONS) return null;
   try {
     const lines = entries.map((entry) => {

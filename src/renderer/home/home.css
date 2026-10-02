@@ -1,27 +1,3 @@
-/* The empty-state title's typing caret. steps(1) blinks it on and off with
-   no fade, like a terminal cursor. */
-@keyframes caret-blink {
-  50% {
-    opacity: 0;
-  }
-}
-
-.typing-caret {
-  display: inline-block;
-  width: 0.06em;
-  height: 0.85em;
-  margin-left: 0.08em;
-  vertical-align: -0.05em;
-  background: currentColor;
-  animation: caret-blink 1.1s steps(1) infinite;
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .typing-caret {
-    animation: none;
-  }
-}
-
 /* The walk's hotkey step: mechanical keycaps on a switch plate. Each cap is
    a lit top face over a darker side wall, and drops the wall's height when
    its key is down (Keycaps.tsx sets data-down). */

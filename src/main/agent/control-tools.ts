@@ -4,6 +4,7 @@
 // read_clipboard, and open_app.
 
 import { clipboard } from 'electron';
+import { setTimeout as sleep } from 'node:timers/promises';
 import type { RegisteredTool, ToolOutcome, ToolRegistry } from '../ai/tools';
 import { createLogger } from '../log';
 import { requestConfirmation, requestPlanConfirmation } from '../mcp/confirm';
@@ -491,7 +492,7 @@ export function addAgentControlTools(
         const detail = errorMessage(error);
         return { content: `Couldn't open "${name}": ${detail}`, isError: true };
       }
-      await new Promise((resolve) => setTimeout(resolve, 900));
+      await sleep(900);
       const shot = await computer.screenshot();
       const front = formatFrontmost(await frontmostApp());
       // An unchanged screen carries no image, which after launching an app

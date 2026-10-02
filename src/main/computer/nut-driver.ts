@@ -6,13 +6,14 @@
 import { Button, Key, keyboard, mouse, Point, straightTo } from '@nut-tree-fork/nut-js';
 import { execFile } from 'child_process';
 import { clipboard } from 'electron';
+import { setTimeout as sleep } from 'timers/promises';
 import { promisify } from 'util';
 import { claimKeys, claimMouse, claimTyping, type DriverSafetyHooks } from './claim';
 import type { Point2D } from './provider';
 
 const execFileAsync = promisify(execFile);
 
-export type MouseButton = 'left' | 'right' | 'middle';
+type MouseButton = 'left' | 'right' | 'middle';
 
 /** All coordinates are global screen DIP, matching Electron's screen module. */
 export interface InputDriver {
@@ -82,10 +83,6 @@ for (let digit = 0; digit <= 9; digit++) {
 }
 for (let f = 1; f <= 12; f++) {
   defineKey([`f${f}`], Key[`F${f}` as 'F1']);
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
 // --- Media keys ---------------------------------------------------------------

@@ -21,7 +21,10 @@ export type TourStopId =
   | "texts"
   | "skills"
   | "airplane"
-  | "account";
+  | "account"
+  | "permissions"
+  | "providers"
+  | "summon";
 
 export interface TourStop {
   id: TourStopId;
@@ -93,6 +96,44 @@ export function drawingLine(circled: string | null): string {
     : "Ask me where anything is, and I'll circle it right on your screen.";
 }
 
+const CHATS_STOP: TourStop = {
+  id: "chats",
+  line: "This is where our conversations live. All our dialogue can be found here, and you can type to me too.",
+};
+
+/**
+ * The tour for a build with no account service: there was no walk, so it
+ * covers what the walk and Buddy's keys would have: permissions, keys or a
+ * local model, the brain, and how to reach Buddy.
+ */
+export const OWN_KEYS_TOUR: TourStop[] = [
+  {
+    id: "intro",
+    line: "Hey, I'm Buddy. You're running me from source, so there's no account here. I run on your own keys and your Mac's permissions. Let me show you what to set up. Press Escape anytime to skip it.",
+  },
+  CHATS_STOP,
+  {
+    id: "permissions",
+    page: "permissions",
+    line: "First, permissions. I need the microphone to hear you, screen recording to see your screen, and accessibility to click and type for you. Grant each one here. Granting screen recording may restart me. That's normal.",
+  },
+  {
+    id: "providers",
+    page: "providers",
+    line: "Next, API keys. An OpenRouter key gives me every cloud model. Or install Ollama and pick a model under Local, free and offline. ElevenLabs gives me a better voice, TypeSafe makes me faster at using your computer, and Composio connects apps like Gmail and Calendar. Those three are optional. For web search and phone calls, add Exa and Bland with their keys under MCP servers.",
+  },
+  {
+    id: "brain",
+    page: "brain",
+    line: "Once a key is in, Brain is where you pick the models I think with, a fast one for quick answers and a deeper one for hard questions.",
+  },
+  {
+    id: "summon",
+    page: "summon",
+    line: "And Controls is how you reach me. Hold the speak keys, talk, and let go. Change them here if you like. That's the tour. The README covers the rest. ☕️",
+  },
+];
+
 /** The tour after the walk: an introduction with the chat closed, the chat, then Settings. */
 export function tourStops(firstName: string, waitlisted: boolean): TourStop[] {
   const name = firstName ? `, ${firstName}` : "";
@@ -101,10 +142,7 @@ export function tourStops(firstName: string, waitlisted: boolean): TourStop[] {
     : `Glad you're here${name}. You're all set. Let me give you a quick tour. Press Escape anytime to skip it.`;
   return [
     { id: "intro", line: intro },
-    {
-      id: "chats",
-      line: "This is where our conversations live. All our dialogue can be found here, and you can type to me too.",
-    },
+    CHATS_STOP,
     {
       id: "brain",
       page: "brain",

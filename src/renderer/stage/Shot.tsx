@@ -1,5 +1,3 @@
-'use client';
-
 import {
   motion,
   useAnimationFrame,
@@ -12,19 +10,7 @@ import { useCallback, useEffect, useRef, useState, type ReactElement, type RefOb
 import { BuddyDot } from './BuddyDot';
 import { DEFAULT_RADIUS } from './clock';
 import { Cursor } from './Cursor';
-import {
-  cursorPose,
-  followBubbleAt,
-  glideBubble,
-  LAND,
-  restTime,
-  sceneAt,
-  stageGeometry,
-  trailPointer,
-  type BubbleSpot,
-  type Point,
-  type StageClock,
-} from './timeline';
+import { cursorPose, LAND, restTime, sceneAt, stageGeometry, type StageClock } from './timeline';
 import './shot.css';
 
 interface Sprite {
@@ -39,18 +25,13 @@ function useSprite(): Sprite {
 
 /**
  * The landing shot: one clock drives the sphere, the cursor, the glow, and
- * the burst. `markRef` is the box the sphere settles on. Once something sets
- * `clock.follow`, the sphere leaves that box and trails the pointer. `onContact`
- * fires the frame the shockwave appears, `onLanded` when the spiral ends, and
+ * the burst. `markRef` is the box the sphere settles on. `onContact` fires
+ * the frame the shockwave appears, `onLanded` when the spiral ends, and
  * `onGone` when a clock with an exit has finished scaling the sphere away.
  */
 export function Shot({
   clock,
   markRef,
-  noteRef,
-  noteX,
-  noteY,
-  avoidRef,
   modelUrl,
   onContact,
   onStart,
@@ -59,12 +40,6 @@ export function Shot({
 }: {
   clock: RefObject<StageClock>;
   markRef: RefObject<HTMLDivElement | null>;
-  /** While the dot trails the pointer, this box is placed above it each frame. */
-  noteRef?: RefObject<HTMLDivElement | null>;
-  noteX?: MotionValue<number>;
-  noteY?: MotionValue<number>;
-  /** What that box steps around rather than covers. */
-  avoidRef?: RefObject<HTMLElement | null>;
   modelUrl: string;
   onContact?: () => void;
   /** Once the model is ready and the spiral clock starts. */
@@ -88,15 +63,13 @@ export function Shot({
   // Unpainted outside its second, so the huge layer costs nothing at rest.
   const burstDisplay = useTransform(burst.opacity, (o) => (o > 0 ? 'block' : 'none'));
   const cursor = useSprite();
-  const note = useRef<{ offset: Point | null; spot?: BubbleSpot; at: number }>({ offset: null, at: 0 });
 
   // The mark's box is where the sphere lands. Its centre is read every frame
   // (the layout moves as whatever sits beside it grows); its size only on
-  // resize. Once the dot has left, the last centre stands: the box is
-  // collapsing and the sphere is already on its way.
+  // resize.
   const readHome = useCallback((): number => {
     const rect = markRef.current?.getBoundingClientRect();
-    if (!rect || clock.current.follow.at !== null) return DEFAULT_RADIUS;
+    if (!rect) return DEFAULT_RADIUS;
     clock.current.home = { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
     return rect.width / 2;
   }, [clock, markRef]);
@@ -128,9 +101,7 @@ export function Shot({
   useAnimationFrame(() => {
     readHome();
     clock.current.center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-    const now = performance.now();
-    trailPointer(clock.current, now);
-    const frame = sceneAt(clock.current, now);
+    const frame = sceneAt(clock.current, performance.now());
     if (!frame) return;
 
     // The glow box is the sphere's full size and scales about its centre,
@@ -149,18 +120,6 @@ export function Shot({
     cursor.x.set(frame.cursor.x);
     cursor.y.set(frame.cursor.y);
     cursor.opacity.set(frame.cursorOpacity);
-
-    const noteBox = noteRef?.current;
-    if (noteBox && noteX && noteY && clock.current.follow.at !== null) {
-      const avoid = avoidRef?.current?.getBoundingClientRect();
-      const { at, spot } = followBubbleAt(clock.current, noteBox.offsetWidth, noteBox.offsetHeight, avoid, note.current.spot);
-      // A tab coming back after a long pause settles at once rather than lurching.
-      const dtS = note.current.at ? Math.min(0.1, (now - note.current.at) / 1000) : 0;
-      const offset = reduced ? { x: at.x - clock.current.follow.trail.x, y: at.y - clock.current.follow.trail.y } : glideBubble(clock.current, note.current.offset, at, dtS);
-      note.current = { offset, spot, at: now };
-      noteX.set(clock.current.follow.trail.x + offset.x);
-      noteY.set(clock.current.follow.trail.y + offset.y);
-    }
 
     rootRef.current?.style.setProperty('--disco-hue', frame.hue.toFixed(1));
     rootRef.current?.style.setProperty('--flare', frame.flare.toFixed(3));

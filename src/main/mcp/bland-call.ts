@@ -35,6 +35,12 @@ export function exposesTool(server: { enabled: boolean; name: string; url: strin
   return !isBlandServer(server) || CALL_TOOL.test(toolName) || FOLLOW_TOOL.test(toolName);
 }
 
+export function hasOwnBlandKey(headers: Record<string, string>): boolean {
+  return Object.entries(headers).some(
+    ([name, value]) => name.toLowerCase() === 'authorization' && value.trim().length > 0,
+  );
+}
+
 /**
  * Where a Bland server with no key of its own connects: the API, which holds
  * Buddy's key. A pasted Authorization header stays on Bland directly.
@@ -46,10 +52,7 @@ export function blandProxyUrl(
 ): string | null {
   if (!managed || !apiUrl) return null;
   if (!isBlandServer({ ...server, enabled: true })) return null;
-  const own = Object.entries(server.headers).some(
-    ([name, value]) => name.toLowerCase() === 'authorization' && value.trim().length > 0,
-  );
-  if (own) return null;
+  if (hasOwnBlandKey(server.headers)) return null;
   const target = new URL(server.url);
   return `${apiUrl.replace(/\/$/, '')}/v1/bland${target.pathname}${target.search}`;
 }

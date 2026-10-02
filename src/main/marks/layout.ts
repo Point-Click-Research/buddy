@@ -1,6 +1,7 @@
 // Where a mark's pieces land: the numbered badge next to the mark, and the
 // close-up crop around it. Pure math, unit-tested; no Electron imports.
 
+import { clamp } from '../coords';
 import type { Rect, StrokePoint } from './classify';
 
 /** The badge circle's radius, matched by the overlay renderer and images.ts. */
@@ -43,8 +44,4 @@ export function cropRect(bounds: Rect, image: { width: number; height: number })
   const right = clamp(Math.ceil(bounds.x + bounds.width + pad), left + 1, image.width);
   const bottom = clamp(Math.ceil(bounds.y + bounds.height + pad), top + 1, image.height);
   return { x: left, y: top, width: right - left, height: bottom - top };
-}
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.min(Math.max(value, min), max);
 }

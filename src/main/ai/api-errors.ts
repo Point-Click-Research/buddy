@@ -25,14 +25,14 @@ export function isNetworkError(error: unknown): boolean {
 }
 
 /** An empty balance, in each provider's words: OpenAI's "no credits remaining" and quota errors, Anthropic's "credit balance", billing holds. */
-export function isCreditsError(error: unknown): boolean {
+function isCreditsError(error: unknown): boolean {
   return /no credits|credit balance|insufficient[_ ]quota|exceeded your current quota|\bquota\b|billing/i.test(
     errorMessage(error),
   );
 }
 
 /** A refused key: wrong, revoked, or unauthenticated. */
-export function isRefusedKey(error: unknown): boolean {
+function isRefusedKey(error: unknown): boolean {
   return /401|authentication|invalid.{0,10}(api.)?key/i.test(
     errorMessage(error),
   );

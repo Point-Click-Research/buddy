@@ -4,8 +4,9 @@
 // or any real turn ends the script (see lifecycle.ts).
 
 import { IpcChannels } from '../shared/ipc';
-import { drawingLine, helloLine, tourStops, walkLine, type TourStopId } from '../shared/tour';
+import { drawingLine, helloLine, OWN_KEYS_TOUR, tourStops, walkLine, type TourStopId } from '../shared/tour';
 import type { PermissionName } from '../shared/types';
+import { accountConfigured } from './account/config';
 import { accountName } from './account/session';
 import { knownPlan } from './account/api';
 import { claimTour, noteFinishedOnboarding, reopenTour } from './account/local';
@@ -141,7 +142,7 @@ async function sayStep(step: string, line: string, signal: AbortSignal): Promise
 }
 
 /** The walk is over: the drawing comes down, the flag is set for this account, and the tour starts. */
-export function finishWalk(): void {
+function finishWalk(): void {
   dismissAll();
   updateSettings({ onboardingDone: true });
   noteFinishedOnboarding();
@@ -164,7 +165,7 @@ export function replayTour(): void {
 export function startTour(): void {
   if (!claimTour()) return;
   spoken.clear();
-  const stops = tourStops(accountName().firstName, knownPlan() === 'waitlist');
+  const stops = accountConfigured() ? tourStops(accountName().firstName, knownPlan() === 'waitlist') : OWN_KEYS_TOUR;
   const signal = beginScript();
   const setStop = (stop: TourStopId | null): void => broadcast(IpcChannels.tourChanged, stop);
   void (async () => {

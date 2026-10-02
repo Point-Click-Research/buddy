@@ -42,7 +42,7 @@ const MISSING = [
 /** The one window Buddy's browser has, as the model addresses it. */
 const PID = 0;
 const WINDOW_ID = 1;
-export const BROWSER_APP = "Buddy's browser";
+const BROWSER_APP = "Buddy's browser";
 
 /** Wheel pixels per "click" of scroll_amount. */
 const SCROLL_PX = 100;

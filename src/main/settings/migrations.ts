@@ -88,7 +88,7 @@ function renameClaudeModelKeys(store: SettingsStore): void {
  * per-model provider overrides go, since there is one cloud provider. The
  * old Anthropic and OpenAI keys are dropped from the keychain store.
  */
-export function brainsThroughOpenRouter(store: SettingsStore): void {
+function brainsThroughOpenRouter(store: SettingsStore): void {
   const stored = store.get('settings') as Omit<Partial<Settings>, 'brainProvider'> & {
     brainProvider?: string;
     brainFastProvider?: string;

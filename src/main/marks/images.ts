@@ -11,6 +11,7 @@
 
 import sharp from 'sharp';
 import { solidHexColor } from '../../shared/color';
+import { round } from '../../shared/pen';
 import { BADGE_RADIUS } from './layout';
 import type { ClassifiedStroke, Rect, StrokePoint } from './classify';
 
@@ -120,8 +121,4 @@ function arrowhead(points: readonly StrokePoint[], color: string, scale: number)
     `<path d="M ${round(tip.x)} ${round(tip.y)} L ${round(left.x)} ${round(left.y)} ` +
     `L ${round(right.x)} ${round(right.y)} Z" fill="${color}"/>`
   );
-}
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
 }

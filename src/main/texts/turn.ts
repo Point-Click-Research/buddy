@@ -5,6 +5,7 @@
 // and runs the agent, whose words and questions go out as texts too.
 
 import { execFile } from 'node:child_process';
+import { setTimeout as sleep } from 'node:timers/promises';
 import { powerSaveBlocker } from 'electron';
 import { isAgentActive, runApprovedAgentTask, type AgentTask } from '../agent/agent';
 import { createProposeTaskTool, type RemoteUser } from '../agent/control-tools';
@@ -145,7 +146,7 @@ function textedPolicy(user: RemoteUser): ConfirmPolicy {
 }
 
 /** The card as a text: a plan reads as the plan, anything else as its title and detail. */
-export function cardText(card: ConfirmCard): string {
+function cardText(card: ConfirmCard): string {
   const body = card.plan
     ? `Before I do this:\n${card.plan.description}`
     : [card.title, card.detail, card.edit?.text].filter(Boolean).join('\n');
@@ -160,7 +161,7 @@ export function cardText(card: ConfirmCard): string {
 async function withDisplayLit<T>(work: () => Promise<T>): Promise<T> {
   // -u asserts user activity, which is what turns a dark display back on.
   execFile('caffeinate', ['-u', '-t', '2'], () => undefined);
-  await new Promise((resolve) => setTimeout(resolve, WAKE_MS));
+  await sleep(WAKE_MS);
   const blocker = powerSaveBlocker.start('prevent-display-sleep');
   try {
     return await work();

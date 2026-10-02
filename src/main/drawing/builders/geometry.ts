@@ -4,6 +4,7 @@
 // These are the ones that make Buddy able to teach rather than just point.
 
 import type { Point } from '../../../shared/drawing';
+import { round } from '../../../shared/pen';
 import { sameDisplay } from '../anchors';
 import { labelBelow, labelUnder, readBox, type ShapeBuilder } from '../build';
 import { moveLineTo } from '../geometry';
@@ -313,10 +314,6 @@ const axes: ShapeBuilder = (shape, context) => {
     points: parts.length,
   };
 };
-
-function round(value: number): number {
-  return Math.round(value * 100) / 100;
-}
 
 export const GEOMETRY_BUILDERS: Record<string, ShapeBuilder> = {
   arc,
